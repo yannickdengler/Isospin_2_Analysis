@@ -2,10 +2,6 @@ using Pkg; Pkg.activate("analysis code")
 using HDF5
 using DelimitedFiles
 
-hdf5dir  = "/home/zierler_fabian/Nextcloud/isospin2/hdf files/" 
-hdf5list = readdir(hdf5dir,join=true)
-filter!(isfile,hdf5list)
-
 """
         write_ensemble_list(hdf5list) 
 
@@ -46,6 +42,10 @@ function sort_ensemble_file!(filename)
     data = sortslices(data,dims=1)
     writedlm(filename,vcat(header,data),';')
 end
+
+hdf5dir  = "/home/zierler_fabian/Nextcloud/isospin2/hdf files/" 
+hdf5list = readdir(hdf5dir,join=true)
+filter!(isfile,hdf5list)
 
 filename = "ensembles.csv"
 write_ensemble_list(hdf5list;filename)

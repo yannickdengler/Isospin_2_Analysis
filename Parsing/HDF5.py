@@ -12,6 +12,26 @@ import h5py
 import os
 import sys
 
+def add_pi_rho_pipi_avarage(Operators, Correlators):
+    pi_rho_pipi = ("pi", "rho", "pipi")
+    for Op in pi_rho_pipi:
+        Operators.append(Op)
+        Operators.append(Op+"_im")
+    pi = (Correlators[Operators.index("pi1")]+Correlators[Operators.index("pi2")])/2
+    pi_im = (Correlators[Operators.index("pi1_im")]+Correlators[Operators.index("pi2_im")])/2
+    rho_tmp = []
+    rho_im_tmp = []
+    for Op in ("rho1_11", "rho1_12", "rho1_13", "rho1_21", "rho1_22", "rho1_23", "rho1_31", "rho1_32", "rho1_33", "rho2_11", "rho2_12", "rho2_13", "rho2_21", "rho2_22", "rho2_23", "rho2_31", "rho2_32", "rho2_33"):
+        rho_tmp.append(Correlators[Operators.index(Op)]) 
+        rho_im_tmp.append(Correlators[Operators.index(Op+"_im")]) 
+    rho = np.mean(rho_tmp,axis=0)
+    rho_im = np.mean(rho_tmp,axis=0)
+    pipi = (Correlators[Operators.index("AD")]+Correlators[Operators.index("BC")])/(0.5)
+    pipi_im = (Correlators[Operators.index("AD_im")]+Correlators[Operators.index("BC_im")])/(0.5)
+    for Corr in (pi, pi_im, rho, rho_im, pipi, pipi_im):
+        Correlators = np.append(Correlators, np.expand_dims(Corr, axis=0), axis = 0)
+    return Operators, Correlators
+
 def create_scattering_momentum(filename,hdfpath="../../HDF5_logfiles/"):
     print("create_scattering: ", filename)
 
@@ -25,7 +45,7 @@ def create_scattering_momentum(filename,hdfpath="../../HDF5_logfiles/"):
     m_2 = 0
     N_L = 0
     N_T = 0
-    Correlators = []                                            # 4-array, Operator (+Semwall etc.), src, Montecarlo-time, Lattice-time
+    # Correlators = []                                            # 4-array, Operator (+Semwall etc.), src, Montecarlo-time, Lattice-time
     Acceptance = []                                             # ??
     Filenames = []                                              # Vector of Strings, filenames including the montecarlo time
     Operators = []                                              # The measured Operators (pi1, rho1, AD etc. )
@@ -104,6 +124,7 @@ def create_scattering_momentum(filename,hdfpath="../../HDF5_logfiles/"):
         print("Number of sources: ", num_src)
 
         print("Writing Correlators...")
+
         Correlators = np.zeros((len(Operators_w_im), num_src, len(Montecarlotimes),N_T))
         for lines in data:
             words = lines.split()
@@ -122,6 +143,7 @@ def create_scattering_momentum(filename,hdfpath="../../HDF5_logfiles/"):
                     Correlators[current_Operator_index][current_src_index][current_Montecarlotime_index][int(words[3])] = float(words[4])     #max(float(words[4]),1)
                     Correlators[current_Operator_index+1][current_src_index][current_Montecarlotime_index][int(words[3])] = float(words[5])   #max(float(words[5]),1)
             
+        (Operators_w_im, Correlators) = add_pi_rho_pipi_avarage(Operators_w_im, Correlators)
         print("Size of Correlator array [num_Operators][num_soruces][num_Montecarlotimes][N_T]:[%i][%i][%i][%i]"%(len(Correlators),len(Correlators[0]),len(Correlators[0][0]),len(Correlators[0][0][0])) )
         num_Montecarlotimes = len(Correlators[0][0])
         num_src = len(Correlators[0])
@@ -144,6 +166,7 @@ def create_scattering_momentum(filename,hdfpath="../../HDF5_logfiles/"):
         f.create_dataset("N_T", data = N_T)
         f.create_dataset("correlators", data = Correlators)
         print()
+
 
 fi = open(sys.argv[1])
 filelist = fi.read().splitlines()

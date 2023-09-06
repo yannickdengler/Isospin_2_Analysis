@@ -25,11 +25,11 @@ function correlator_derivative(c::AbstractArray;t_dim=1)
     for i in CartesianIndices(c)
         # special case the first and the last index: 
         if i[t_dim] == 1
-           c_deriv[i] = c[i] - c[i+unit_t]
+           c_deriv[i] = c[i+unit_t] - c[i]
         elseif i[t_dim] == T
-           c_deriv[i] = c[i-unit_t] - c[i]
+           c_deriv[i] = c[i] - c[i-unit_t]
         else
-           c_deriv[i] = (c[i-unit_t] - c[i+unit_t])/2
+           c_deriv[i] = (c[i+unit_t] - c[i-unit_t])/2
         end    
     end
     return c_deriv

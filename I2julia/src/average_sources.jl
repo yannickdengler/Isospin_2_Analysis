@@ -22,7 +22,6 @@ function average_sources(corr::AbstractArray)
     # corresponding to (t,tMC,nsrc,nops)
     @assert ndims(corr) == 4
     nsrc = size(corr)[3]
-    @show size(corr)
     source_averaged = mean(corr,dims=3)
     # this removes the source-dimension from the array
     source_averaged = dropdims(source_averaged,dims=3)

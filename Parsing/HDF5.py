@@ -12,7 +12,7 @@ import h5py
 import os
 import sys
 
-def create_scattering_momentum(filename,hdfpath="../../HDF5_files/"):
+def create_scattering_momentum(filename,hdfpath="../../HDF5_logfiles/"):
     print("create_scattering: ", filename)
 
     logfile_name = filename

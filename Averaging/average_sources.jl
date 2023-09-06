@@ -2,7 +2,7 @@ using Pkg; Pkg.activate("analysis_code/I2julia")
 using I2julia
 using HDF5
 
-hdf5dir  = "/home/zierler_fabian/Nextcloud/isospin2/HDF5_files/" 
+hdf5dir  = "HDF5_logfiles/" 
 hdf5list = readdir(hdf5dir,join=true)
 filter!(isfile,hdf5list)
 

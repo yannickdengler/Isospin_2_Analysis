@@ -16,14 +16,15 @@ using Statistics
 """
 function average_sources(hdf_file::AbstractString) 
     file_id = h5open(hdf_file)
-    corr = read(file_id,"Correlators")
+    corr = read(file_id,"correlators")
+    nsrc = read(file_id,"N_hits")
     close(file_id)
     return average_sources(corr)
 end
 function average_sources(corr::AbstractArray) 
     # According to our specification this correlator needs to have 5 indices
-    # corresponding to (t,tMC,nsrc,nmom,nops)
-    @assert ndims(corr) == 5
+    # corresponding to (t,tMC,nsrc,nops)
+    @assert ndims(corr) == 4
     nsrc = size(corr)[3]
     @show size(corr)
     source_averaged = mean(corr,dims=3)
@@ -49,35 +50,36 @@ end
 function average_configurations(corr::AbstractArray) 
     # According to our specification this correlator needs to have 4 indices
     # corresponding to (t,tMC,nmom,nops)
-    @assert ndims(corr) == 4
+    @assert ndims(corr) == 3
     ncfg = size(corr)[2]
     avg_corr  = mean(corr,dims=2)
     Δavg_corr = std(corr,dims=2)./sqrt(ncfg)
     # this removes the source-dimension from the array
-    avg_corr  = dropdims(avg_corr,dims=3)
-    Δavg_corr = dropdims(Δavg_corr,dims=3)
+    avg_corr  = dropdims(avg_corr,dims=2)
+    Δavg_corr = dropdims(Δavg_corr,dims=2)
     return avg_corr, avg_corr, ncfg
 end
 function average_configurations(hdf_file::AbstractString) 
     file_id = h5open(hdf_file)
-    corr = read(file_id,"Correlators")
+    corr = read(file_id,"correlators")
     close(file_id)
     # If the array is 4-dimensional we assume that the average over all sources 
     # has already been performed
-    @assert ndims(corr) == 4 || ndims(corr) == 5
-    if ndims(corr) == 4
+    @assert ndims(corr) == 3 || ndims(corr) == 4
+    if ndims(corr) == 3
         return average_configurations(corr)
-    elseif ndims(corr) == 5
+    elseif ndims(corr) == 4
         source_averaged, nsrc = average_sources(corr)
         return average_configurations(source_averaged)
     end
 end
 
-hdf5dir  = "/home/zierler_fabian/Nextcloud/isospin2/hdf files/" 
+hdf5dir  = "/home/zierler_fabian/Nextcloud/isospin2/HDF5_files/" 
 hdf5list = readdir(hdf5dir,join=true)
 filter!(isfile,hdf5list)
 
+file_id = h5open(hdf5list[1])
+corr = read(file_id,"correlators")
+
 source_averaged, nsrc = average_sources(hdf5list[1]) 
 avg_corr, avg_corr, ncfg = average_configurations(hdf5list[1])
-avg_corr
-source_averaged

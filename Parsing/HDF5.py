@@ -1,17 +1,18 @@
 """
     @Author: Yannick Dengler
     @Date:   2023-Sep-5
-    @Last Modified by: Yannick Dengler
+    @Last Modified by: Fabian Zierler 2023-Sep-6
     
     This file contains scripts to create a HDF5 from an output file from the HiRep Scattering Code
-    Execute with: "python3 HDF5.py"
+    Execute with: "python3 HDF5.py PATH_TO_LISTFILE"
  """
-
 
 import numpy as np
 import h5py
+import os
+import sys
 
-def create_scattering_momentum(filename):
+def create_scattering_momentum(filename,hdfpath="../../HDF5_files/"):
     print("create_scattering: ", filename)
 
     logfile_name = filename
@@ -32,7 +33,6 @@ def create_scattering_momentum(filename):
     Plaquette = []
     num_src = 0
 
-    print("__________________"+filename)
     with open(filename.strip()) as fi:                          # .strip() removes a potential "\n" in the end of the string
         data = fi.readlines()
 
@@ -126,7 +126,8 @@ def create_scattering_momentum(filename):
         num_Montecarlotimes = len(Correlators[0][0])
         num_src = len(Correlators[0])
 
-        f = h5py.File("./HDF5_files/Scattering_%s_%1.2e_%1.3e_%1.3e_%i_%i.hdf5"%(gauge_group,beta,m_1,m_2,N_T,N_L),"w")
+        os.makedirs(hdfpath, exist_ok=True)
+        f = h5py.File(hdfpath+"Scattering_%s_%1.2e_%1.3e_%1.3e_%i_%i.hdf5"%(gauge_group,beta,m_1,m_2,N_T,N_L),"w")
 
         f.create_dataset("logfile name", data=logfile_name)
         f.create_dataset("N_mont", data = num_Montecarlotimes)
@@ -142,12 +143,10 @@ def create_scattering_momentum(filename):
         f.create_dataset("N_L", data = N_L)
         f.create_dataset("N_T", data = N_T)
         f.create_dataset("correlators", data = Correlators)
+        print()
 
-with open("./listfile", 'r') as file:
-    for filename in file.readlines():
-        create_scattering_momentum(filename)
+fi = open(sys.argv[1])
+filelist = fi.read().splitlines()
 
-# with h5py.File("Parsing/HDF5_files/Scattering_SP(4)_6.90e+00_-9.000e-01_-9.000e-01_20_10.hdf5","r") as file:
-#     for key in file:
-#         print(key)
-#         print(file[key][()])
+for files in filelist:
+    create_scattering_momentum(files)

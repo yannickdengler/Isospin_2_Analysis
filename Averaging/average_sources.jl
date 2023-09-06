@@ -1,4 +1,4 @@
-using Pkg; Pkg.activate("analysis_code/I2julia")
+using Pkg; Pkg.activate("Isospin_2_Analysis/I2julia")
 using I2julia
 using HDF5
 

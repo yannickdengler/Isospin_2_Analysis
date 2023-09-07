@@ -6,8 +6,8 @@ using DelimitedFiles
 using Roots
 using ProgressMeter
 
-include("average_sources.jl")
-export average_sources, average_configurations
+include("average.jl")
+export average_sources, average_configurations, write_averaged_hdf5_files
 include("ensemble_table.jl")
 export write_ensemble_list
 include("effective_mass.jl")

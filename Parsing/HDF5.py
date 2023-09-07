@@ -148,7 +148,7 @@ def create_scattering_momentum(filename,hdfpath="../../HDF5_logfiles/"):
             
         if isospin_chanel == 2:
             (Operators_w_im, Correlators) = add_pi_rho_pipi_avarage(Operators_w_im, Correlators)
-            
+
         print(len(Operators_w_im), " operators (w/ imag): ", Operators_w_im)
         print("Size of Correlator array [num_Operators][num_soruces][num_Montecarlotimes][N_T]:[%i][%i][%i][%i]"%(len(Correlators),len(Correlators[0]),len(Correlators[0][0]),len(Correlators[0][0][0])) )
         num_Montecarlotimes = len(Correlators[0][0])
@@ -158,6 +158,7 @@ def create_scattering_momentum(filename,hdfpath="../../HDF5_logfiles/"):
         f = h5py.File(hdfpath+"Scattering_%s_%1.2e_%1.3e_%1.3e_%i_%i.hdf5"%(gauge_group,beta,m_1,m_2,N_T,N_L),"w")
 
         f.create_dataset("logfile name", data=logfile_name)
+        f.create_dataset("isospin_chanel", data=isospin_chanel)
         f.create_dataset("N_mont", data = num_Montecarlotimes)
         f.create_dataset("N_hits", data = num_src)
         f.create_dataset("filenames", data = Filenames)

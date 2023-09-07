@@ -4,6 +4,7 @@ using HDF5
 using Statistics
 using DelimitedFiles
 using Roots
+using ProgressMeter
 
 include("average_sources.jl")
 export average_sources, average_configurations

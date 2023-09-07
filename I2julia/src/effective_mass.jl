@@ -13,8 +13,8 @@ jackknife method.
 """
 function implicit_meff(c::AbstractVector;sign=+1)
     T = length(c)
-    m = zeros(eltype(c),div(T,2))
-    for t in 1:div(T,2)
+    m = similar(c)
+    for t in 1:T
         m[t] = _meff_at_t(c,t,T;sign=sign)
     end
     return m
@@ -30,9 +30,9 @@ end
 # (Notation in Gattringer/Lang is misleading!)
 function _meff_at_t(c::AbstractVector,t,T;sign=+1)
     # non-implicit mass as initial guess
-    m0 = 1 # log(abs(c[t]/c[mod1(t+1,T)]))
-    t0 = mod1(t-1,T)
-    r0 = abs(c[t0]/c[t])
+    m0 = log(abs(c[mod1(t+1,T)]/c[t]))
+    t0 = mod1(t+1,T)
+    r0 = c[t0]/c[t]
     # correlator at large times (dropped overall factor)
     cor_lt(m,T,t) = exp(-m*t) + sign*exp(-m*(t-T/2))
     # function to fit the effective mass
@@ -48,7 +48,7 @@ function _meff_at_t(c::AbstractVector,t,T;sign=+1)
     return m
 end
 """
-    implicit_meff_jackknife(c::AbstractMatrix;sign=+1)
+    implicit_meff_jackknife(c::AbstractArray;sign=+1)
 
 Calculates the effective mass of the correlator `c` according to equation (10)
 of arXiv:1607.06654 and provides an estimator of the uncertainty using a 
@@ -64,7 +64,7 @@ function implicit_meff_jackknife(corrs::AbstractMatrix;sign=+1)
     T, N = size(corrs)
     # create arrays for decay constant
     corrs_delete1 = zeros(T,N-1)
-    meff = zeros(N,T÷2)
+    meff = zeros(N,T)
     # set up jack-knife (one deletion)
     for i in 1:N
         for t in 1:T
@@ -78,6 +78,24 @@ function implicit_meff_jackknife(corrs::AbstractMatrix;sign=+1)
         meff[i,:] = implicit_meff(C;sign)
     end
     return apply_jackknife(meff)
+end
+# This function takes care of arrays with additional inidces. The additional 
+# indices are collected as ind by the use of the `axes(corr)` function. This 
+# returns a set of iterators for each additional dimension of the array. We then
+# loop over every additional index using the `Iterators.product` utility 
+function implicit_meff_jackknife(corrs::AbstractArray;sign=+1)
+    d = ndims(corrs)
+    it, iMC, ind... = axes(corrs)
+    size_meff_array = (size(corrs,1),size(corrs)[3:end]...)
+    meff  = zeros(eltype(corrs),size_meff_array)
+    Δmeff = zeros(eltype(corrs),size_meff_array)
+    #@showprogress "Jackknife analysis for effective mass:" for i in Iterators.product(ind...)
+    for i in Iterators.product(ind...)
+        # slurping is needed to correctly insert the tuple i into an index
+        c = @view corrs[:,:,i...]
+        meff[:,i...], Δmeff[:,i...] = implicit_meff_jackknife(c;sign)
+    end
+    return meff, Δmeff
 end
 function apply_jackknife(obs)
     N  = size(obs)[1]

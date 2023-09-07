@@ -19,4 +19,4 @@ The code "HDF5.py" in "Parsing" extracts the necessary informations from the log
 - "N_L": The spatial extend of the lattice
 - "N_T": The temporal extend of the lattice
 - "operators": A list of the operators extracted from the logfile. Each operator has an entry for the real and the imaginary part. The set of operators depends on the isospin channel and includes a first analysis of the correlators. For the isospin-2 channel the Pion-, Rho- and Two-Pion correlation function is calculated and normalized from the other entries.
-- "correlators": A array that contains the correlation function of each measured operator. The array has 4 indices and has the size: `num_Operators x num_soruces x num_Montecarlotimes x N_T`.
+- "correlators": A array that contains the correlation function of each measured operator. The array has 4 indices and has the size: ```num_Operators x num_soruces x num_Montecarlotimes x N_T```.

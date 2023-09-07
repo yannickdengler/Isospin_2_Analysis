@@ -12,7 +12,7 @@ import h5py
 import os
 import sys
 
-def add_pi_rho_pipi_avarage(Operators, Correlators):
+def add_pi_rho_pipi_avarage_I2(Operators, Correlators):
     pi_rho_pipi = ("pi", "rho", "pipi")
     for Op in pi_rho_pipi:
         Operators.append(Op)
@@ -40,6 +40,7 @@ def create_scattering_momentum(filename,hdfpath="../../HDF5_logfiles/"):
         if filename[i] == "/":
             logfile_name = filename[i+1:]
     gauge_group = ""
+    isospin_chanel = "None"
     beta = 0
     m_1 = 0
     m_2 = 0
@@ -68,6 +69,9 @@ def create_scattering_momentum(filename,hdfpath="../../HDF5_logfiles/"):
                         num_src = int(words[7])
             if gauge_group == "":
                 if words[0] == "[SYSTEM][0]Gauge":
+                    gauge_group = words[2]
+            if isospin_chanel == "None":
+                if words[0] == "[MAIN][0]Isospin":
                     gauge_group = words[2]
 
             if beta == 0 and m_1 == 0 and m_2 == 0 and N_L == 0 and N_T == 0:
@@ -119,7 +123,6 @@ def create_scattering_momentum(filename,hdfpath="../../HDF5_logfiles/"):
             Operators_w_im.append(Operator)
             Operators_w_im.append(Operator+"_im")
         
-        print(len(Operators_w_im), " operators (w/ imag): ", Operators_w_im)
         print("Number of Motecarlo steps: ", len(Montecarlotimes))
         print("Number of sources: ", num_src)
 
@@ -143,7 +146,10 @@ def create_scattering_momentum(filename,hdfpath="../../HDF5_logfiles/"):
                     Correlators[current_Operator_index][current_src_index][current_Montecarlotime_index][int(words[3])] = float(words[4])     #max(float(words[4]),1)
                     Correlators[current_Operator_index+1][current_src_index][current_Montecarlotime_index][int(words[3])] = float(words[5])   #max(float(words[5]),1)
             
-        (Operators_w_im, Correlators) = add_pi_rho_pipi_avarage(Operators_w_im, Correlators)
+        if isospin_chanel == 2:
+            (Operators_w_im, Correlators) = add_pi_rho_pipi_avarage(Operators_w_im, Correlators)
+            
+        print(len(Operators_w_im), " operators (w/ imag): ", Operators_w_im)
         print("Size of Correlator array [num_Operators][num_soruces][num_Montecarlotimes][N_T]:[%i][%i][%i][%i]"%(len(Correlators),len(Correlators[0]),len(Correlators[0][0]),len(Correlators[0][0][0])) )
         num_Montecarlotimes = len(Correlators[0][0])
         num_src = len(Correlators[0])

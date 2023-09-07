@@ -12,22 +12,29 @@ import h5py
 import os
 import sys
 
-def add_pi_rho_pipi_avarage_I2(Operators, Correlators):
+def add_pi_rho_pipi_average_I2(Operators, Correlators, N_L):
     pi_rho_pipi = ("pi", "rho", "pipi")
     for Op in pi_rho_pipi:
         Operators.append(Op)
         Operators.append(Op+"_im")
-    pi = (Correlators[Operators.index("pi1")]+Correlators[Operators.index("pi2")])/2
-    pi_im = (Correlators[Operators.index("pi1_im")]+Correlators[Operators.index("pi2_im")])/2
+    # pi = (Correlators[Operators.index("pi1")]+Correlators[Operators.index("pi2")])/2
+    # pi_im = (Correlators[Operators.index("pi1_im")]+Correlators[Operators.index("pi2_im")])/2
     rho_tmp = []
     rho_im_tmp = []
     for Op in ("rho1_11", "rho1_12", "rho1_13", "rho1_21", "rho1_22", "rho1_23", "rho1_31", "rho1_32", "rho1_33", "rho2_11", "rho2_12", "rho2_13", "rho2_21", "rho2_22", "rho2_23", "rho2_31", "rho2_32", "rho2_33"):
-        rho_tmp.append(Correlators[Operators.index(Op)]) 
-        rho_im_tmp.append(Correlators[Operators.index(Op+"_im")]) 
+        rho_tmp.append(Correlators[Operators.index(Op)]/(2*pow(N_L,3))) 
+        rho_im_tmp.append(Correlators[Operators.index(Op+"_im")]/(2*pow(N_L,3))) 
     rho = np.mean(rho_tmp,axis=0)
     rho_im = np.mean(rho_tmp,axis=0)
-    pipi = (Correlators[Operators.index("AD")]+Correlators[Operators.index("BC")])/(0.5)
-    pipi_im = (Correlators[Operators.index("AD_im")]+Correlators[Operators.index("BC_im")])/(0.5)
+    pi_tmp = []
+    pi_im_tmp = []
+    for Op in ("pi1", "pi2"):
+        pi_tmp.append(Correlators[Operators.index(Op)]/(2*pow(N_L,3))) 
+        pi_im_tmp.append(Correlators[Operators.index(Op+"_im")]/(2*pow(N_L,3))) 
+    pi = np.mean(rho_tmp,axis=0)
+    pi_im = np.mean(rho_tmp,axis=0)
+    pipi = (Correlators[Operators.index("AD")]+Correlators[Operators.index("BC")])/(0.5*4*pow(N_L,6))
+    pipi_im = (Correlators[Operators.index("AD_im")]+Correlators[Operators.index("BC_im")])/(0.5*4*pow(N_L,6))
     for Corr in (pi, pi_im, rho, rho_im, pipi, pipi_im):
         Correlators = np.append(Correlators, np.expand_dims(Corr, axis=0), axis = 0)
     return Operators, Correlators
@@ -40,13 +47,12 @@ def create_scattering_momentum(filename,hdfpath="../../HDF5_logfiles/"):
         if filename[i] == "/":
             logfile_name = filename[i+1:]
     gauge_group = ""
-    isospin_chanel = "None"
+    isospin_channel = int(999)
     beta = 0
     m_1 = 0
     m_2 = 0
     N_L = 0
     N_T = 0
-    # Correlators = []                                            # 4-array, Operator (+Semwall etc.), src, Montecarlo-time, Lattice-time
     Acceptance = []                                             # ??
     Filenames = []                                              # Vector of Strings, filenames including the montecarlo time
     Operators = []                                              # The measured Operators (pi1, rho1, AD etc. )
@@ -70,9 +76,9 @@ def create_scattering_momentum(filename,hdfpath="../../HDF5_logfiles/"):
             if gauge_group == "":
                 if words[0] == "[SYSTEM][0]Gauge":
                     gauge_group = words[2]
-            if isospin_chanel == "None":
+            if isospin_channel == 999:
                 if words[0] == "[MAIN][0]Isospin":
-                    gauge_group = words[2]
+                    isospin_channel = int(words[2])
 
             if beta == 0 and m_1 == 0 and m_2 == 0 and N_L == 0 and N_T == 0:
                 if words[0] == "[MAIN][0]Configuration":
@@ -125,6 +131,7 @@ def create_scattering_momentum(filename,hdfpath="../../HDF5_logfiles/"):
         
         print("Number of Motecarlo steps: ", len(Montecarlotimes))
         print("Number of sources: ", num_src)
+        print("Isospin channel: ", isospin_channel)
 
         print("Writing Correlators...")
 
@@ -146,8 +153,8 @@ def create_scattering_momentum(filename,hdfpath="../../HDF5_logfiles/"):
                     Correlators[current_Operator_index][current_src_index][current_Montecarlotime_index][int(words[3])] = float(words[4])     #max(float(words[4]),1)
                     Correlators[current_Operator_index+1][current_src_index][current_Montecarlotime_index][int(words[3])] = float(words[5])   #max(float(words[5]),1)
             
-        if isospin_chanel == 2:
-            (Operators_w_im, Correlators) = add_pi_rho_pipi_avarage(Operators_w_im, Correlators)
+        if isospin_channel == 2:
+            (Operators_w_im, Correlators) = add_pi_rho_pipi_average_I2(Operators_w_im, Correlators, N_L)
 
         print(len(Operators_w_im), " operators (w/ imag): ", Operators_w_im)
         print("Size of Correlator array [num_Operators][num_soruces][num_Montecarlotimes][N_T]:[%i][%i][%i][%i]"%(len(Correlators),len(Correlators[0]),len(Correlators[0][0]),len(Correlators[0][0][0])) )
@@ -158,7 +165,7 @@ def create_scattering_momentum(filename,hdfpath="../../HDF5_logfiles/"):
         f = h5py.File(hdfpath+"Scattering_%s_%1.2e_%1.3e_%1.3e_%i_%i.hdf5"%(gauge_group,beta,m_1,m_2,N_T,N_L),"w")
 
         f.create_dataset("logfile name", data=logfile_name)
-        f.create_dataset("isospin_chanel", data=isospin_chanel)
+        f.create_dataset("isospin_channel", data=isospin_channel)
         f.create_dataset("N_mont", data = num_Montecarlotimes)
         f.create_dataset("N_hits", data = num_src)
         f.create_dataset("filenames", data = Filenames)

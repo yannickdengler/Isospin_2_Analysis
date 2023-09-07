@@ -13,12 +13,13 @@ import os
 import sys
 
 def add_pi_rho_pipi_average_I2(Operators, Correlators, N_L):
+    """
+    Calculates the meaned and normalized correlation functions of the pi, rho and pipi Operators in the isospin-2 channel and adds them to the "Operator" list and the "Correlators" array
+    """
     pi_rho_pipi = ("pi", "rho", "pipi")
     for Op in pi_rho_pipi:
         Operators.append(Op)
         Operators.append(Op+"_im")
-    # pi = (Correlators[Operators.index("pi1")]+Correlators[Operators.index("pi2")])/2
-    # pi_im = (Correlators[Operators.index("pi1_im")]+Correlators[Operators.index("pi2_im")])/2
     rho_tmp = []
     rho_im_tmp = []
     for Op in ("rho1_11", "rho1_12", "rho1_13", "rho1_21", "rho1_22", "rho1_23", "rho1_31", "rho1_32", "rho1_33", "rho2_11", "rho2_12", "rho2_13", "rho2_21", "rho2_22", "rho2_23", "rho2_31", "rho2_32", "rho2_33"):
@@ -31,15 +32,18 @@ def add_pi_rho_pipi_average_I2(Operators, Correlators, N_L):
     for Op in ("pi1", "pi2"):
         pi_tmp.append(Correlators[Operators.index(Op)]/(2*pow(N_L,3))) 
         pi_im_tmp.append(Correlators[Operators.index(Op+"_im")]/(2*pow(N_L,3))) 
-    pi = np.mean(rho_tmp,axis=0)
-    pi_im = np.mean(rho_tmp,axis=0)
+    pi = np.mean(pi_tmp,axis=0)
+    pi_im = np.mean(pi_im_tmp,axis=0)
     pipi = (Correlators[Operators.index("AD")]+Correlators[Operators.index("BC")])/(0.5*4*pow(N_L,6))
     pipi_im = (Correlators[Operators.index("AD_im")]+Correlators[Operators.index("BC_im")])/(0.5*4*pow(N_L,6))
     for Corr in (pi, pi_im, rho, rho_im, pipi, pipi_im):
         Correlators = np.append(Correlators, np.expand_dims(Corr, axis=0), axis = 0)
     return Operators, Correlators
 
-def create_scattering_momentum(filename,hdfpath="../../HDF5_logfiles/"):
+def create_scattering(filename,hdfpath="../../HDF5_logfiles/"):
+    """
+    Function that converts a logfile from a scattering measurement of HiRep to a HDF file with the relevant information
+    """
     print("create_scattering: ", filename)
 
     logfile_name = filename
@@ -186,4 +190,4 @@ fi = open(sys.argv[1])
 filelist = fi.read().splitlines()
 
 for files in filelist:
-    create_scattering_momentum(files)
+    create_scattering(files)

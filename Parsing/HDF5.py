@@ -157,7 +157,9 @@ def create_scattering(filename,hdfpath="../../HDF5_logfiles/"):
                     Correlators[current_Operator_index][current_src_index][current_Montecarlotime_index][int(words[3])] = float(words[4])     #max(float(words[4]),1)
                     Correlators[current_Operator_index+1][current_src_index][current_Montecarlotime_index][int(words[3])] = float(words[5])   #max(float(words[5]),1)
             
+        isospin_str = ""
         if isospin_channel == 2:
+            isospin_str = "_I2"
             (Operators_w_im, Correlators) = add_pi_rho_pipi_average_I2(Operators_w_im, Correlators, N_L)
 
         print(len(Operators_w_im), " operators (w/ imag): ", Operators_w_im)
@@ -165,8 +167,10 @@ def create_scattering(filename,hdfpath="../../HDF5_logfiles/"):
         num_Montecarlotimes = len(Correlators[0][0])
         num_src = len(Correlators[0])
 
+
         os.makedirs(hdfpath, exist_ok=True)
-        f = h5py.File(hdfpath+"Scattering_%s_%1.2e_%1.3e_%1.3e_%i_%i.hdf5"%(gauge_group,beta,m_1,m_2,N_T,N_L),"w")
+        # f = h5py.File(hdfpath+"Scattering_%s_%1.2e_%1.3e_%1.3e_%i_%i.hdf5"%(gauge_group,beta,m_1,m_2,N_T,N_L),"w")
+        f = h5py.File(hdfpath+"Scattering%s_%s_beta%1.3f_m1%1.3f_m2%1.3f_T%i_L%i_logfile.hdf5"%(isospin_str, gauge_group, beta, m_1, m_2, N_T, N_L),"w")
 
         f.create_dataset("logfile name", data=logfile_name)
         f.create_dataset("isospin_channel", data=isospin_channel)

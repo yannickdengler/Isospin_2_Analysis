@@ -22,7 +22,12 @@ source_averaged_deriv = correlator_derivative(source_averaged)
 corr, Δcorr, ncfg = average_configurations(source_averaged)
 corr_deriv, Δcorr_deriv, ncfg = average_configurations(source_averaged_deriv)
 
-
+source_averaged[:,:,1]
+meff, Δmeff = implicit_meff_jackknife(source_averaged[:,:,1];sign=+1)
+meff
+Δmeff
+using Plots
+scatter(meff,yerr=Δmeff)
 
 #=
 # Plot a test

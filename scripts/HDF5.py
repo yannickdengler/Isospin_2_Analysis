@@ -40,7 +40,7 @@ def add_pi_rho_pipi_average_I2(Operators, Correlators, N_L):
         Correlators = np.append(Correlators, np.expand_dims(Corr, axis=0), axis = 0)
     return Operators, Correlators
 
-def create_scattering(filename,hdfpath="../../HDF5_logfiles/"):
+def create_scattering(filename,hdfpath="../output/HDF5_logfiles/"):
     """
     Function that converts a logfile from a scattering measurement of HiRep to a HDF file with the relevant information
     """
@@ -169,7 +169,6 @@ def create_scattering(filename,hdfpath="../../HDF5_logfiles/"):
 
 
         os.makedirs(hdfpath, exist_ok=True)
-        # f = h5py.File(hdfpath+"Scattering_%s_%1.2e_%1.3e_%1.3e_%i_%i.hdf5"%(gauge_group,beta,m_1,m_2,N_T,N_L),"w")
         f = h5py.File(hdfpath+"Scattering%s_%s_beta%1.3f_m1%1.3f_m2%1.3f_T%i_L%i_logfile.hdf5"%(isospin_str, gauge_group, beta, m_1, m_2, N_T, N_L),"w")
 
         f.create_dataset("logfile name", data=logfile_name)

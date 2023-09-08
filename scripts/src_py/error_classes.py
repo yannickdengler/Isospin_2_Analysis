@@ -6,11 +6,12 @@
     Takes data and parses it to the resampler and the functions to get an estimation of the error
 """
 import sys
+import os
 import h5py
 import numpy as np
 import matplotlib.pyplot as plt
 import math
-import resampling as rs
+import src_py.resampling as rs
 
 def mean_OG_sample(OG_Sample):
     mean = []
@@ -25,10 +26,9 @@ class measurement:
         self.sampling_args = sampling_args
         self.results = {}
     def measure(self, OG_Sample, args, check_for_bad_results = True):
-        mean_res = self.measure_func(mean_OG_sample(OG_Sample), args)       
-        # print(mean_res)         
+        mean_res = self.measure_func(mean_OG_sample(OG_Sample), args)     
         for res_key, res in mean_res.items():
-            print(res_key, res)
+            # print(res_key, res)
             for val in res:
                 if np.isnan(val) or np.isinf(val):
                     sys.exit("NaN or inf in Mean: %s"%(res_key))
@@ -36,7 +36,6 @@ class measurement:
         for key in mean_res:
             result_samples[key] = []
         Resamples = rs.resampling(OG_Sample, self.sampling_args)
-        # Resamples = resampling(OG_Sample, self.sampling_args)
         tot = len(Resamples)                            
         for i, Resample in zip(range(len(Resamples)), Resamples):
             print(i*100./tot, "%")
@@ -56,10 +55,11 @@ class measurement:
             self.result_names.append(key)
             self.results[key] = result(key, mean_res[key], result_samples[key], self.sampling_args)
     def visit_print(self):
-        with h5py.File("../data/result_files/"+self.name+".hdf5","r") as f:
+        with h5py.File("../output/HDF5_logfiles"+self.name+".hdf5","r") as f:
             f.visit(print)
-    def print_to_HDF(self):
-        with h5py.File("functions_yannick/result_files"+self.name+".hdf5","w") as f:
+    def print_to_HDF(self, hdfpath = "../output/HDF5_resultfiles/"):
+        os.makedirs(hdfpath, exist_ok=True)
+        with h5py.File(hdfpath+self.name+".hdf5","w") as f:
             f.create_dataset(str(self.name), data = self.name)
             f.create_dataset("result_names", data = self.result_names)
             for i in range(len(self.sampling_args)):
@@ -68,8 +68,8 @@ class measurement:
                 f.create_dataset(str(result.name)+"_sample", data = result.sample)
                 f.create_dataset(str(result.name)+"_result", data = result.result)
             f.visit(print)
-    def read_from_HDF(self):
-        with h5py.File("functions_yannick/result_files"+self.name+".hdf5","r") as f:
+    def read_from_HDF(self, hdfpath = "../output/HDF5_resultfiles/"):
+        with h5py.File(hdfpath+self.name+".hdf5","r") as f:
             f.visit(print)
             self.result_names = []
             for name in f["result_names"]:

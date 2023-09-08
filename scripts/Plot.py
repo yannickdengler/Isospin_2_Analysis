@@ -101,5 +101,5 @@ def plot_eff_mass(filename):
 
 set_errorbar_settings()
 
-plot_Corr("/home/dengler_yannick/Documents/Isospin_2_analysis/HDF5_logfiles/Scattering_SP(4)_7.20e+00_-7.800e-01_-7.800e-01_24_12.hdf5")
-# plot_eff_mass("/home/dengler_yannick/Documents/Isospin_2_analysis/HDF5_logfiles/Scattering_SP(4)_6.90e+00_-9.000e-01_-9.000e-01_24_12.hdf5")
+# plot_Corr("../output/HDF5_logfiles/Scattering_I2_SP(4)_beta6.900_m1-0.900_m2-0.900_T24_L12_logfile.hdf5")
+# plot_eff_mass("../output/HDF5_logfiles/Scattering_I2_SP(4)_beta6.900_m1-0.900_m2-0.900_T24_L12_logfile.hdf5")

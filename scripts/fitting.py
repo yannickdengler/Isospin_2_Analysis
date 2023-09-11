@@ -2,14 +2,14 @@ import gvar as gv
 import corrfitter as cf
 import h5py
 import numpy as np
+import os
 
 def get_hdf5_value(hdf5file,key):
-    return hdf5file[key][()
-                         ]
+    return hdf5file[key][()]
 
-def make_models(T):
+def make_models(T,tmin=2):
     """ Create corrfitter model for G(t). """
-    return [cf.Corr2(datatag='Gab', tp=T, a='a', b='a', dE='dE')]
+    return [cf.Corr2(datatag='Gab', tp=T, tmin=tmin, tmax=abs(T)/2, a='a', b='a', dE='dE')]
 
 def make_prior(N):
     prior = gv.BufferDict()
@@ -43,7 +43,7 @@ def print_fit_param(fit):
         # TODO: Better printing
         #print('log(BGF) = ', logGBF)
         #print('Q = ', Q)
-        print('chi2/dof = ', chi2/dof)
+        print('chi2/dof = ', chi2/dof, '\n')
 
 def main(data,T,Nmax=5):
     fitter = cf.CorrFitter(models=make_models(T))
@@ -63,28 +63,33 @@ def main(data,T,Nmax=5):
     # NOTE: The bootstrap analysis is performed using the priors and initial 
     # parameters used in the last invokation of the previous fit. 
     bootstrap_fit(fitter, data, T)
+    # NOTE: From the lsqfit documentation
+    # There are several different views available for each plot, specified by parameter view:
+    #   'ratio': Data divided by fit (default).
+    #   'diff': Data minus fit, divided by data’s standard deviation.
+    #   'std': Data and fit.
+    #   'log': 'std' with log scale on the vertical axis.
+    #   'loglog': ‘std’` with log scale on both axes.
+    fit.show_plots(view='log')
 
-
-fn = '/home/zierler_fabian/Nextcloud/Isospin_2_Analysis/output/HDF5_source_average/Scattering_I2_SP(4)_beta6.900_m1-0.870_m2-0.870_T20_L10_logfile.hdf5'
-f  = h5py.File(fn,'r')
+filedir  = './output/HDF5_source_average/'
+filelist = os.listdir(filedir)
+filesrc  = filedir+filelist[0]
+fid = h5py.File(filesrc,'r')
 
 # read the data from the hdf5 file
-T = get_hdf5_value(f,'N_T')
-corr = get_hdf5_value(f,'correlator')
-corr_deriv = get_hdf5_value(f,'correlator_deriv')
-ops = get_hdf5_value(f,'operators')
+T = get_hdf5_value(fid,'N_T')
+corr = get_hdf5_value(fid,'correlator')
+corr_deriv = get_hdf5_value(fid,'correlator_deriv')
+ops = get_hdf5_value(fid,'operators')
 
 # pion correlator data
+# TODO: Assert that operators match
 corr_pi   = corr[44,:,:]
 corr_rho  = corr[46,:,:]
-corr_pipi = corr_deriv[48,:,:]
-# TODO: Assert that operators match
-print(ops[44])
-print(ops[46])
-print(ops[48])
-print(T)
+corr_pipi = -corr_deriv[48,:,:]
+print(filesrc)
 
-corr = dict(Gab=corr_pi)
+corr = dict(Gab=corr_pipi)
 dset = gv.dataset.Dataset(corr)
-
-main(dset,T)
+main(dset,-T,Nmax=10)

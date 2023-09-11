@@ -96,7 +96,7 @@ labelled by the prefix "Delta_", i.e. the uncertainties of the correlator are
 saved as `Delta_correlator`.
 
 """
-function write_averaged_hdf5_files(hdf5list;hdf5dir_src_averaged = "HDF5_source_average", hdf5dir_MC_averaged  = "HDF5_MC_average")
+function write_averaged_hdf5_files(hdf5list;src_averaged_name = "HDF5_source_average", MC_averaged_name = "HDF5_MC_average")
     for logfile in hdf5list
         file_id = h5open(logfile)
         corr = read(file_id,"correlators")
@@ -104,6 +104,8 @@ function write_averaged_hdf5_files(hdf5list;hdf5dir_src_averaged = "HDF5_source_
         keys_hdf = keys(file_id)
         keys_without_correlators = filter(!isequal("correlators"),keys(file_id))
 
+        hdf5dir_src_averaged = joinpath(splitpath(logfile)[1:end-2]...,src_averaged_name)
+        hdf5dir_MC_averaged  = joinpath(splitpath(logfile)[1:end-2]...,MC_averaged_name)
         ispath(hdf5dir_src_averaged) || mkpath(hdf5dir_src_averaged)
         ispath(hdf5dir_MC_averaged)  || mkpath(hdf5dir_MC_averaged)
         filename = splitpath(logfile)[end]

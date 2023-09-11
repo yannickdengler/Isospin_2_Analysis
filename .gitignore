@@ -1,4 +1,7 @@
 *.pdf
 *.dat
 output/*
+!output/.gitkeep
 plots/*
+!plots/.gitkeep
+!input/.gitkeep

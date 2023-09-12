@@ -40,12 +40,13 @@ def get_corr_ops_info_from_HDF5_logfile(filename):
 def calc_and_save_corr_with_error_test(filename):
     (corr, ops, info) = get_corr_ops_info_from_HDF5_logfile(filename)
     test = ec.measurement("corr", measure_func=return_corr, sampling_args = ("JK_SAMEDIM", 0, 0))
-    test.measure(OG_Sample=np.swapaxes(np.mean(corr[0], axis=0),0,1), args=[])
+    test.measure(orig_sample=np.swapaxes(np.mean(corr[0], axis=0),0,1), args=[])
     test.print_to_HDF()
 
-calc_and_save_corr_with_error_test("/home/dengler_yannick/Documents/Isospin_2_analysis/HDF5_logfiles/Scattering_I2_SP(4)_beta6.900_m1-0.900_m2-0.900_T20_L10_logfile.hdf5")
+# calc_and_save_corr_with_error_test("/home/dengler_yannick/Documents/Isospin_2_analysis/HDF5_logfiles/Scattering_I2_SP(4)_beta6.900_m1-0.900_m2-0.900_T20_L10_logfile.hdf5")
 
 
-test = ec.measurement("corr", measure_func=return_corr, sampling_args = ("JK_SAMEDIM", 0, 0))
-test.read_from_HDF()
-test.print_everything()
+# test = ec.measurement("corr", measure_func=return_corr, sampling_args = ("JK_SAMEDIM", 0, 0))
+# test.read_from_HDF()
+# test.print_everything()
+

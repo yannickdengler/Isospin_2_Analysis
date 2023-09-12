@@ -13,20 +13,29 @@ import matplotlib.pyplot as plt
 import math
 import src_py.resampling as rs
 
-def mean_OG_sample(OG_Sample):
+def mean_orig_sample(orig_sample):
+    """
+    Takes the mean along the 0th axis. This is used to get the mean result
+    """
     mean = []
-    for Corr_mont in OG_Sample:
+    for Corr_mont in orig_sample:
         mean.append(np.mean(Corr_mont, axis=0))
     return mean
 
 class measurement:
+    """
+    This class contains functions that parses a sample to a resampling algorithm and then to a function that does a calculation
+    """
     def __init__(self, name, measure_func, sampling_args = ("JK", 0, 0)):
         self.name = name
         self.measure_func = measure_func
         self.sampling_args = sampling_args
         self.results = {}
-    def measure(self, OG_Sample, args, check_for_bad_results = True):
-        mean_res = self.measure_func(mean_OG_sample(OG_Sample), args)     
+    def measure(self, orig_sample, args, check_for_bad_results = True):
+        """
+        Takes a sample and parses it to a function to obtain an estimate for the error
+        """
+        mean_res = self.measure_func(mean_orig_sample(orig_sample), args)     
         for res_key, res in mean_res.items():
             # print(res_key, res)
             for val in res:
@@ -35,7 +44,7 @@ class measurement:
         result_samples = {}                                                             
         for key in mean_res:
             result_samples[key] = []
-        Resamples = rs.resampling(OG_Sample, self.sampling_args)
+        Resamples = rs.resampling(orig_sample, self.sampling_args)
         tot = len(Resamples)                            
         for i, Resample in zip(range(len(Resamples)), Resamples):
             print(i*100./tot, "%")
@@ -58,6 +67,9 @@ class measurement:
         with h5py.File("../output/HDF5_logfiles"+self.name+".hdf5","r") as f:
             f.visit(print)
     def print_to_HDF(self, hdfpath = "../output/HDF5_resultfiles/"):
+        """
+        Prints a result to an HDF file
+        """
         os.makedirs(hdfpath, exist_ok=True)
         with h5py.File(hdfpath+self.name+".hdf5","w") as f:
             f.create_dataset(str(self.name), data = self.name)
@@ -69,6 +81,9 @@ class measurement:
                 f.create_dataset(str(result.name)+"_result", data = result.result)
             f.visit(print)
     def read_from_HDF(self, hdfpath = "../output/HDF5_resultfiles/"):
+        """
+        Reads a result from an HDF file
+        """
         with h5py.File(hdfpath+self.name+".hdf5","r") as f:
             f.visit(print)
             self.result_names = []
@@ -81,9 +96,12 @@ class measurement:
         for result in self.results.values():
             print(result.name, result.median, result.e)
 
-def JK_err(Sample, res):                                                               # Sample [sample][results]  # res [result]
+def JK_err(Sample, res):                                                            
+    """
+    Calculates the error for a delete-1 Jackknife Sample (not checked)
+    """
     size = len(Sample)
-    err = np.zeros(len(Sample[0]))                                                                                   # [result]
+    err = np.zeros(len(Sample[0]))             
     tmp = np.swapaxes(Sample, 0, 1)
     for i in range(len(tmp)):
         for val in tmp[i]:
@@ -91,10 +109,13 @@ def JK_err(Sample, res):                                                        
         err[i] = np.sqrt(err[i]*(size-1)/size)
     return err
 
-def BS_err(Sample):                                                                                 # Sample [sample][results]
+def BS_err(Sample):      
+    """
+    Calculates the error for a Bootstrap Sample (not checked)
+    """                                                                          
     size = len(Sample)
     mean = np.mean(Sample, axis = 0)
-    err = np.zeros(len(Sample[0]))                                                                                   # [result]
+    err = np.zeros(len(Sample[0]))                 
     tmp = np.swapaxes(Sample, 0, 1)
     for i in range(len(tmp)):
         for val in tmp[i]:
@@ -102,7 +123,10 @@ def BS_err(Sample):                                                             
         err[i] = np.sqrt(err[i]/size)
     return err
 
-class result:
+class result:  
+    """
+    Class that stores a single result and calculates the error. Is contained in "measurement"
+    """          
     def __init__(self, name, result, res_sample, sampling_args = ("JK", 0, 0)):
         if not sampling_args[0] == "None":
             self.name = name                                          
@@ -129,7 +153,10 @@ class result:
             elif sampling_args[0] == "BS" or sampling_args[0] == "BS_SAMEDIM" or sampling_args[0] == "BS_FIX":
                 self.e_BS = BS_err(res_sample)
 
-    def draw_histogram(self, ind=0, num_bins = 20):
+    def draw_histogram(self, ind=0, num_bins = 20):  
+        """
+        Function that draws a histogram from a distribution of a result sample
+        """          
         data = np.swapaxes(self.sample,0,1)[ind]
         start = 0
         stop = len(data)
@@ -147,6 +174,9 @@ class result:
         plt.hist(data,bins = bins, orientation="horizontal")
         plt.show()
     def percent_nan(self):
+        """
+        Prints the amount of NaNs in your sample
+        """          
         nans = 0
         tot = len(self.sample)
         for res in self.sample:

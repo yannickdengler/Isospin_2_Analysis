@@ -10,68 +10,68 @@ import sys
 import numpy as np
 import random
 
-def resampling(OG_Sample, sampling_args):                # OG_sample = [observable][mont], returns [resample][observable], [observable] means different observable
+def resampling(orig_sample, sampling_args):                # orig_sample = [observable][mont], returns [resample][observable], [observable] means different observable
     """
-    Takes a list of shape [num_observable][T_mont] and resamples it arcording to the sampling args. The result is a list of shape [num_resampling][num_bservables]
+    Takes a list of shape [num_observable][T_mont] and resamples it arcording to the sampling args. The result is a list of shape [num_resampling][num_observables]
     """    
     if sampling_args[0] == "JK":
-        if len(OG_Sample) > 1:
+        if len(orig_sample) > 1:
             sys.exit("resampling: Number of Corr can not be larger than 1 for JK, use JK_SAMEDIM instead!")
-        return resampling_JK(OG_Sample, sampling_args)
+        return resampling_JK(orig_sample, sampling_args)
     elif sampling_args[0] == "JK_SAMEDIM":
-        for i in range(len(OG_Sample)):
-            if (len(OG_Sample[i]) != len(OG_Sample[0])):
+        for i in range(len(orig_sample)):
+            if (len(orig_sample[i]) != len(orig_sample[0])):
                 sys.exit("Samples for JK_SAMEDIM are not of same DIM, use Bootstrap instead")
-        return resampling_JK_SAMEDIM(OG_Sample, sampling_args)
+        return resampling_JK_SAMEDIM(orig_sample, sampling_args)
     elif sampling_args[0] == "BS_SAMEDIM":
-        for i in range(len(OG_Sample)):
-            if len(OG_Sample[i]) is not len(OG_Sample[0]):
+        for i in range(len(orig_sample)):
+            if len(orig_sample[i]) is not len(orig_sample[0]):
                 sys.exit("Samples for BS_SAMEDIM are not of same DIM, use BS instead")
-        return resampling_BS_SAMEDIM(OG_Sample, sampling_args)
+        return resampling_BS_SAMEDIM(orig_sample, sampling_args)
     elif sampling_args[0] == "BS_DIFFDIM":
-        return resampling_BS_DIFFDIM(OG_Sample, sampling_args)
+        return resampling_BS_DIFFDIM(orig_sample, sampling_args)
     elif sampling_args[0] == "None":
-        return [np.mean(OG_Sample,axis=1),]
+        return [np.mean(orig_sample,axis=1),]
     else:
         sys.exit("No valid sampling method given!")
 
 
 
-def resampling_JK(OG_Sample, sampling_args):
+def resampling_JK(orig_sample, sampling_args):
     """
-    Resamples an OG_Sample of one Observable with the cut-1 Jackknife method
+    Resamples an orig_sample of one Observable with the cut-1 Jackknife method
     """
-    Resamples = np.zeros((len(OG_Sample[0]), 1))
+    Resamples = np.zeros((len(orig_sample[0]), 1))
     num_JK = len(Resamples)
     for i in range(num_JK):
         for j in range(num_JK):
             if i != j:
-                Resamples[i][0] += OG_Sample[0][i]/num_JK
+                Resamples[i][0] += orig_sample[0][i]/num_JK
     return Resamples
 
-def resampling_JK_SAMEDIM(OG_Sample, sampling_args):
+def resampling_JK_SAMEDIM(orig_sample, sampling_args):
     """
-    Resamples an OG_Sample of one Observable with the cut-1 Jackknife method with more than one Observable coming from the same gauge configurations
+    Resamples an orig_sample of one Observable with the cut-1 Jackknife method with more than one Observable coming from the same gauge configurations
     """
-    num_JK = len(OG_Sample[0])
-    num_obs = len(OG_Sample)
+    num_JK = len(orig_sample[0])
+    num_obs = len(orig_sample)
     Resamples = np.zeros((num_JK, num_obs))
     for i in range(num_obs):
         for j in range(num_JK):
             for k in range(num_JK):
                 if j != k:
-                    Resamples[j][i] += OG_Sample[i][j]/num_JK
+                    Resamples[j][i] += orig_sample[i][j]/num_JK
     return Resamples
 
 
 
-def resampling_BS_SAMEDIM(OG_Sample, sampling_args):
+def resampling_BS_SAMEDIM(orig_sample, sampling_args):
     """
-    Resamples an OG_Sample of Observables by bootstrapping num times, 
+    Resamples an orig_sample of Observables by bootstrapping num times, 
     """
     num_BS = sampling_args[1]
-    num_obs = len(OG_Sample)
-    num_mont = len(OG_Sample[0])
+    num_obs = len(orig_sample)
+    num_mont = len(orig_sample[0])
 
     Resamples = np.zeros((num_BS, num_obs))
 
@@ -79,25 +79,25 @@ def resampling_BS_SAMEDIM(OG_Sample, sampling_args):
         for j in range(num_BS):
             randint = random.randint(0,num_mont-1)
             for k in range(num_obs):
-                Resamples[j][k] += OG_Sample[k][randint]/num_mont
+                Resamples[j][k] += orig_sample[k][randint]/num_mont
     return Resamples
 
-def resampling_BS_DIFFDIM(OG_Sample, sampling_args):
+def resampling_BS_DIFFDIM(orig_sample, sampling_args):
     """
-    Resamples an OG_Sample of Observables by bootstrapping num times, 
+    Resamples an orig_sample of Observables by bootstrapping num times, 
     """
     num_BS = sampling_args[1]
-    num_obs = len(OG_Sample)
-    # num_mont = len(OG_Sample[0])                                # kann nicht generell definiert werden!
+    num_obs = len(orig_sample)
+    # num_mont = len(orig_sample[0])                                # kann nicht generell definiert werden!
 
     Resamples = np.zeros((num_BS, num_obs))
 
     for i in range(num_BS):
         for j in range(num_obs):
-            num_mont = len(OG_Sample[j])
+            num_mont = len(orig_sample[j])
             for k in range(num_mont):
                 randint = random.randint(0,num_mont-1)
-                Resamples[i][j] += OG_Sample[j][randint]/num_mont
+                Resamples[i][j] += orig_sample[j][randint]/num_mont
     return Resamples
 
 

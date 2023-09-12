@@ -30,8 +30,6 @@ def get_ops_from_HDF5_logfile(filename):
 
 def get_info_from_HDF5_logfile(filename):
     with h5py.File(filename,"r") as file:
-        # for key in file:
-        #     print(key, file[key][()])
         return file["N_L"][()], file["N_T"][()], file["gauge_group"][()].decode(), file["beta"][()], file["m_1"][()], file["m_2"][()]
      
 def get_corr_ops_info_from_HDF5_logfile(filename):

@@ -10,6 +10,7 @@ import h5py
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import bisect                                            # should be done somewhere else in the future
+import src_py.read_HDF5_logfile as read_HDF
 
 # print(plt.rcParams.keys())
 
@@ -34,18 +35,6 @@ def eff_mass_settings():
     plt.xlabel("$n_t$")
     plt.ylabel("$m_{eff}$")
 
-def get_corr_from_HDF5_logfile(filename):
-    with h5py.File(filename,"r") as file:
-        return file["correlators"][()]
-
-def get_ops_from_HDF5_logfile(filename):
-    with h5py.File(filename,"r") as file:
-        return file["operators"][()]
-
-def get_info_from_HDF5_logfile(filename):
-    with h5py.File(filename,"r") as file:
-        return file["N_L"][()], file["N_T"][()], file["gauge_group"][()].decode(), file["beta"][()], file["m_1"][()], file["m_2"][()]
-     
 
 def calc_eff_mass_impl_deri(Corr):   
     m_eff = np.zeros(len(Corr)-3)
@@ -65,9 +54,9 @@ def calc_eff_mass_impl_deri(Corr):
     return m_eff
 
 def plot_Corr(filename):
-    Corr = get_corr_from_HDF5_logfile(filename)
-    Operators = get_ops_from_HDF5_logfile(filename)
-    N_L, N_T, gauge_group, beta, m_1, m_2 = get_info_from_HDF5_logfile(filename)
+    Corr = read_HDF.get_corr_from_HDF5_logfile(filename)
+    Operators = read_HDF.get_ops_from_HDF5_logfile(filename)
+    N_L, N_T, gauge_group, beta, m_1, m_2 = read_HDF.get_info_from_HDF5_logfile(filename)
 
     (Corr, Corr_err) = get_mean_std_corr(Corr)
     Corr_settings()
@@ -80,9 +69,9 @@ def plot_Corr(filename):
     plt.show()
 
 def plot_eff_mass(filename):
-    Corr = get_corr_from_HDF5_logfile(filename)
-    Operators = get_ops_from_HDF5_logfile(filename)
-    N_L, N_T, gauge_group, beta, m_1, m_2 = get_info_from_HDF5_logfile(filename)
+    Corr = read_HDF.get_corr_from_HDF5_logfile(filename)
+    Operators = read_HDF.get_ops_from_HDF5_logfile(filename)
+    N_L, N_T, gauge_group, beta, m_1, m_2 = read_HDF.get_info_from_HDF5_logfile(filename)
 
     (Corr, Corr_err) = get_mean_std_corr(Corr)
     eff_mass_settings()
@@ -101,5 +90,5 @@ def plot_eff_mass(filename):
 
 set_errorbar_settings()
 
-# plot_Corr("../output/HDF5_logfiles/Scattering_I2_SP(4)_beta6.900_m1-0.900_m2-0.900_T24_L12_logfile.hdf5")
+plot_Corr("output/HDF5_logfiles/Scattering_I2_SP(4)_beta7.200_m1-0.780_m2-0.780_T24_L12_logfile.hdf5")
 # plot_eff_mass("../output/HDF5_logfiles/Scattering_I2_SP(4)_beta6.900_m1-0.900_m2-0.900_T24_L12_logfile.hdf5")

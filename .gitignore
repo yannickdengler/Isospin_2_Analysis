@@ -6,3 +6,5 @@ input/*
 !output/.gitkeep
 !plots/.gitkeep
 !input/.gitkeep
+**/__pycache__/
+*.py[cod]

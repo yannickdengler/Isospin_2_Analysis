@@ -20,7 +20,7 @@ def make_prior(N):
     prior['log(dE)'] = gv.log(gv.gvar(N * ['1(1)']))
     return prior
 
-def bootstrap_fit(fitter,dset,T,tmin,tmax,n=20):
+def bootstrap_fit(fitter,dset,T,tmin,tmax,n=20,printing=False):
     pdatalist = (cf.process_dataset(ds, make_models(T,tmin,tmax)) for ds in gv.dataset.bootstrap_iter(dset, n=n))
     bs = gv.dataset.Dataset()
     for bsfit in fitter.bootstrapped_fit_iter(pdatalist=pdatalist):
@@ -28,8 +28,10 @@ def bootstrap_fit(fitter,dset,T,tmin,tmax,n=20):
     bs = gv.dataset.avg_data(bs, bstrap=True)
     E = bs['E']
     a = bs['a']
-    print('{:2}  {:15}  {:15}'.format('E', E[0], E[1]))
-    print('{:2}  {:15}  {:15}'.format('a', a[0], a[1]))
+    if printing:
+        print('bootstrap: ',30 * '=')
+        print('{:2}  {:15}  {:15}'.format('E', E[0], E[1]))
+        print('{:2}  {:15}  {:15}'.format('a', a[0], a[1]))
     return E, a
 
 def first_fit_parameters(fit):
@@ -46,46 +48,75 @@ def print_fit_param(fit):
     print('{:2}  {:15}  {:15}'.format('a', a[0], a[1]))
     print('chi2/dof = ', chi2/dof, '\n')
 
-def main(data,T,Nmax=5,plotname="test",plotdir="./plots/",antisymmetric=False):
-    tmin = 3
-    tmax = abs(T/2) - 1
+def main(data,T,tmin,tmax,Nmax=5,plotname="test",plotdir="./plots/",antisymmetric=False,plotting=False,printing=False):
     T = - abs(T) if antisymmetric else abs(T) 
     fitter = cf.CorrFitter(models=make_models(T,tmin,tmax))
     avg = gv.dataset.avg_data(data)
     p0 = None
     # TODO: find good Nmax
     for N in range(2,Nmax+1):
-        print('nterm =', N, 30 * '=')
         prior = make_prior(N)
         fit = fitter.lsqfit(data=avg, prior=prior, p0=p0)
         p0 = fit.pmean
-        #print(fit)
-        print_fit_param(fit)
-        #if N == 2:
-    print_fit_param(fit)
+        if printing:
+            print('nterm =', N, 30 * '=')
+            #print(fit)
+            print_fit_param(fit)
     E, a, chi2, dof = first_fit_parameters(fit) 
-    print('bootstrap: ',30 * '=')
     # NOTE: A bootstrap fit can only be performed if`the object `fitter` has 
     # already been used to perform a fit.
     # NOTE: The bootstrap analysis is performed using the priors and initial 
     # parameters used in the last invokation of the previous fit. 
     E_bs, a_bs = bootstrap_fit(fitter, data, T, tmin, tmax)
     # NOTE: From the lsqfit documentation
-    # There are several different views available for each plot, specified by parameter view:
+    # There are several different views available for each plot, specified by parameter view:os.
     #   'ratio': Data divided by fit (default).
     #   'diff': Data minus fit, divided by data’s standard deviation.
     #   'std': Data and fit.
     #   'log': 'std' with log scale on the vertical axis.
     #   'loglog': ‘std’` with log scale on both axes.
-    #fit.show_plots(view='log')
-    os.makedirs(plotdir+plotname, exist_ok=True)
-    fit.show_plots(view='ratio',save=plotdir+plotname+'/ratio.pdf')
-    plt.close()
-    fit.show_plots(view='log'  ,save=plotdir+plotname+'/data.pdf')
-    plt.close()
+    if plotting:
+        os.makedirs(plotdir+plotname, exist_ok=True)
+        fit.show_plots(view='ratio',save=plotdir+plotname+'/ratio.pdf')
+        fit.show_plots(view='log'  ,save=plotdir+plotname+'/data.pdf')
+    return E, a, E_bs, a_bs, chi2, dof
+
+def save_corrfitter_results(fid,resultdir,filename,group,E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax):
+    os.makedirs(resultdir, exist_ok=True)
+    f = h5py.File(resultdir+filename, 'w')
+
+    E_mean = [E_i.mean for E_i in E]
+    E_sdev = [E_i.sdev for E_i in E]
+    E_bs_mean = [E_i.mean for E_i in E_bs]
+    E_bs_sdev = [E_i.sdev for E_i in E_bs]
+    a_mean = [a_i.mean for a_i in a]
+    a_sdev = [a_i.sdev for a_i in a]
+    a_bs_mean = [a_i.mean for a_i in a_bs]
+    a_bs_sdev = [a_i.sdev for a_i in a_bs]
+
+    for key in fid.keys():
+        if "correlator" not in key:
+            f.create_dataset(group+key, data = get_hdf5_value(fid,key))
+
+    f.create_dataset(group+"E", data = E_mean)
+    f.create_dataset(group+"E_bs", data = E_bs_mean)
+    f.create_dataset(group+"A", data = a_mean)
+    f.create_dataset(group+"A_bs", data = a_bs_mean)
+    f.create_dataset(group+"Delta_E", data = E_sdev)
+    f.create_dataset(group+"Delta_E_bs", data = E_bs_sdev)
+    f.create_dataset(group+"Delta_A", data = a_sdev)
+    f.create_dataset(group+"Delta_A_bs", data = a_bs_sdev)
+    f.create_dataset(group+"antisymmetric", data = antisymmetric)
+    f.create_dataset(group+"chi2", data = chi2)
+    f.create_dataset(group+"dof", data = dof)
+    f.create_dataset(group+"Nexp", data = Nmax)
+    f.create_dataset(group+"tmin", data = tmin)
+    f.create_dataset(group+"tmax", data = tmax)
+    return
 
 filedir  = './output/HDF5_source_average/'
 filelist = os.listdir(filedir)
+resultdir  = './output/HDF5_corrfitter_results/'
 
 for i in range(0,len(filelist)):
     filesrc  = filedir+filelist[i]
@@ -111,4 +142,12 @@ for i in range(0,len(filelist)):
     
     corr = dict(Gab=corr_pipi)
     dset = gv.dataset.Dataset(corr)
-    main(dset,T,Nmax=10,plotname=plotname,antisymmetric=True)
+
+    antisymmetric = True
+    plotdir = "./plots/"
+    Nmax = 10
+    tmin = 3
+    tmax = abs(T/2) - 1
+
+    E, a, E_bs, a_bs, chi2, dof = main(dset,T,tmin,tmax,Nmax,plotname,plotdir,antisymmetric)
+    save_corrfitter_results(fid,resultdir,filelist[i],"pipi/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax)

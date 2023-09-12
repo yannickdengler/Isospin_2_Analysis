@@ -3,7 +3,7 @@
 output/*
 plots/*
 input/*
-scripts/src_py/__pycache__/*
+scripts/src_py/__pycache__/
 **.pyc
 !output/.gitkeep
 !plots/.gitkeep

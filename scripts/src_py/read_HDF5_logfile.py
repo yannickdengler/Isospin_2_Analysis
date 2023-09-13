@@ -14,7 +14,10 @@ def get_corr_from_HDF5_logfile(filename):
 
 def get_ops_from_HDF5_logfile(filename):
     with h5py.File(filename,"r") as file:
-        return file["operators"][()]
+        operators = []
+        for ops in file["operators"][()]:
+            operators.append(ops.decode())
+        return operators
 
 def get_info_from_HDF5_logfile(filename):
     with h5py.File(filename,"r") as file:

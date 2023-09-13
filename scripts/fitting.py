@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 def get_hdf5_value(hdf5file,key):
     return hdf5file[key][()]
 
-def make_models(T,tmin,tmax):
+def make_models(T,tmin,tmax,ncg=1):
     """ Create corrfitter model for G(t). """
-    return [cf.Corr2(datatag='Gab', tp=T, tmin=tmin, tmax=tmax, a='a', b='a', dE='dE')]
+    return [cf.Corr2(datatag='Gab', tp=T, tmin=tmin, tmax=tmax, ncg=ncg, a='a', b='a', dE='dE')]
 
 def make_prior(N):
     prior = gv.BufferDict()
@@ -81,9 +81,9 @@ def main(data,T,tmin,tmax,Nmax=5,plotname="test",plotdir="./plots/",antisymmetri
         fit.show_plots(view='log'  ,save=plotdir+plotname+'/data.pdf')
     return E, a, E_bs, a_bs, chi2, dof
 
-def save_corrfitter_results(fid,resultdir,filename,group,E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax):
+def save_corrfitter_results(fid,resultdir,filename,group,E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,mode='w'):
     os.makedirs(resultdir, exist_ok=True)
-    f = h5py.File(resultdir+filename, 'w')
+    f = h5py.File(resultdir+filename, mode)
 
     E_mean = [E_i.mean for E_i in E]
     E_sdev = [E_i.sdev for E_i in E]
@@ -134,14 +134,11 @@ for i in range(0,len(filelist)):
     plotname = "beta{}_m{}_L{}_T{}".format(beta,m,L,T)
     print(plotname)
 
-    # pion correlator data
-    # TODO: Assert that operators match
-    corr_pi   = corr[44,:,:]
-    corr_rho  = corr[46,:,:]
+
+    # start with pipi correlator
     corr_pipi = -corr_deriv[48,:,:]
-    
-    corr = dict(Gab=corr_pipi)
-    dset = gv.dataset.Dataset(corr)
+    corr_pipi = dict(Gab=corr_pipi)
+    dset = gv.dataset.Dataset(corr_pipi)
 
     antisymmetric = True
     plotdir = "./plots/"
@@ -150,4 +147,23 @@ for i in range(0,len(filelist)):
     tmax = abs(T/2) - 1
 
     E, a, E_bs, a_bs, chi2, dof = main(dset,T,tmin,tmax,Nmax,plotname,plotdir,antisymmetric)
-    save_corrfitter_results(fid,resultdir,filelist[i],"pipi/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax)
+    save_corrfitter_results(fid,resultdir,filelist[i],"pipi/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,mode='w')
+
+    # then fir both the pion and the vector meson
+    corr_pi = corr[44,:,:]
+    corr_rho = corr[46,:,:]
+    corr_pi = dict(Gab=corr_pi)
+    dset_pi = gv.dataset.Dataset(corr_pi)
+    corr_rho = dict(Gab=corr_rho)
+    dset_rho = gv.dataset.Dataset(corr_rho)
+
+    antisymmetric = False
+    plotdir = "./plots/"
+    Nmax = 10
+    tmin = 1
+    tmax = abs(T/2)
+
+    E, a, E_bs, a_bs, chi2, dof = main(dset_pi,T,tmin,tmax,Nmax,plotname,plotdir,antisymmetric)
+    save_corrfitter_results(fid,resultdir,filelist[i],"pi/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,mode='a')
+    E, a, E_bs, a_bs, chi2, dof = main(dset_rho,T,tmin,tmax,Nmax,plotname,plotdir,antisymmetric)
+    save_corrfitter_results(fid,resultdir,filelist[i],"rho/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,mode='a')

@@ -16,6 +16,6 @@ export implicit_meff, implicit_meff_jackknife
 include("correlator_derivative.jl")
 export correlator_derivative
 include("plot_energy_levels.jl")
-export plot_egery_levels, plot_egery_levels!
+export plot_energy_levels, plot_energy_levels!
 
 end # module I2julia

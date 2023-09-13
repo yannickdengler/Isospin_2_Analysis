@@ -12,7 +12,7 @@ import random
 
 def resampling(orig_sample, sampling_args):                # orig_sample = [observable][mont], returns [resample][observable], [observable] means different observable
     """
-    Takes a list of shape [num_observable][T_mont] and resamples it arcording to the sampling args. The result is a list of shape [num_resampling][num_observables]
+    Takes a list (orig_sample) of shape [num_observable][T_mont] and resamples it arcording to the sampling args. The result is a list (Resamples) of shape [num_resampling][num_observables]
     """    
     if sampling_args[0] == "JK":
         if len(orig_sample) > 1:
@@ -30,6 +30,11 @@ def resampling(orig_sample, sampling_args):                # orig_sample = [obse
         return resampling_BS_SAMEDIM(orig_sample, sampling_args)
     elif sampling_args[0] == "BS_DIFFDIM":
         return resampling_BS_DIFFDIM(orig_sample, sampling_args)
+    elif sampling_args[0] == "GAUSSIAN":
+        for i in range(len(orig_sample)):
+            if len(orig_sample[i]) != 1:
+                sys.exit("Sample for GAUSSIAN is not 1 dimensional")
+        return resampling_GAUSSIAN(orig_sample, sampling_args)
     elif sampling_args[0] == "None":
         return [np.mean(orig_sample,axis=1),]
     else:
@@ -100,11 +105,18 @@ def resampling_BS_DIFFDIM(orig_sample, sampling_args):
                 Resamples[i][j] += orig_sample[j][randint]/num_mont
     return Resamples
 
+def resampling_GAUSSIAN(orig_sample, sampling_args):
+    """
+    Resamples an orig_sample of Observables distributing it with a gaussian distribution
+    """
+    std = sampling_args[1]                                  # array: one for every observable
+    num_gauss = sampling_args[2]
+    num_obs = len(orig_sample)
 
+    Resamples = np.zeros((num_gauss, num_obs))
+    for i in range(num_gauss):
+        for j in range(num_obs):
+            # Resamples[i][j] = random.normal(orig_sample[j][0], std[j], 1)
+            Resamples[i][j] = np.random.normal(orig_sample[j][0], std[j], 1)
+    return Resamples
 
-
-# example_sample = np.zeros(shape = (10, 89))
-
-# # for sampling in ["JK_SAMEDIM", "JK", "BS_SAMEDIM", "BS_DIFFDIM", "None"]:
-# for sampling in ["JK_SAMEDIM", "BS_SAMEDIM", "BS_DIFFDIM", "None"]:
-#     print(sampling+": ",len(resampling(example_sample,[sampling, 100])))

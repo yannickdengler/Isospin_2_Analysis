@@ -7,6 +7,8 @@
  """
  
 import sys
+from scipy.optimize import curve_fit
+import numpy as np
 
 def inf_mass_fit_Goldstone(N_L, m_inf, A_M):
     """
@@ -25,11 +27,14 @@ def extrapolate_to_inf_mass(data, args):
     """
     N_Ls = args[0]
     mass_Goldstone = args[1]
-    E_0s = data[0]
+    E_0s = data
+    results = {}
     if (len(N_Ls) != len(E_0s)):
         sys.exit('"extrapolate_to_inf_mass: len of arrays N_L and E_0 is not the same!"')
     if mass_Goldstone == 0:
         popt, pcov = curve_fit(f=inf_mass_fit_Goldstone, xdata=N_Ls, ydata=E_0s)
     else:
         popt, pcov = curve_fit(f=inf_mass_fit_meson, xdata=N_Ls, ydata=E_0s)
-    return popt  
+    results["m_inf"] = [popt[0],]
+    results["A_M"] = [popt[1],]
+    return results  

@@ -97,7 +97,7 @@ saved as `Delta_correlator`.
 
 """
 function write_averaged_hdf5_files(hdf5list;src_averaged_name = "HDF5_source_average", MC_averaged_name = "HDF5_MC_average")
-    for logfile in hdf5list
+    @showprogress "Average over sources and/or configurations" for logfile in hdf5list
         file_id = h5open(logfile)
         corr = read(file_id,"correlators")
 

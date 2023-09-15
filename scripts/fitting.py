@@ -81,7 +81,7 @@ def main(data,T,tmin,tmax,ncg,Nmax,plotname="test",plotdir="./plots/",antisymmet
         fit.show_plots(view='log'  ,save=plotdir+plotname+'/data.pdf')
     return E, a, E_bs, a_bs, chi2, dof
 
-def save_corrfitter_results(fid,resultdir,filename,group,E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,mode='w'):
+def save_corrfitter_results(fid,resultdir,filename,group,E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,ncg,mode='w'):
     os.makedirs(resultdir, exist_ok=True)
     f = h5py.File(resultdir+filename, mode)
 
@@ -112,6 +112,7 @@ def save_corrfitter_results(fid,resultdir,filename,group,E,a,E_bs,a_bs,chi2,dof,
     f.create_dataset(group+"Nexp", data = Nmax)
     f.create_dataset(group+"tmin", data = tmin)
     f.create_dataset(group+"tmax", data = tmax)
+    f.create_dataset(group+"ncg", data = ncg)
     return
 
 def fit_all_files(filelist,filedir,resultdir,ncg=1):
@@ -143,7 +144,7 @@ def fit_all_files(filelist,filedir,resultdir,ncg=1):
         tmax = abs(T/2) - 1
 
         E, a, E_bs, a_bs, chi2, dof = main(dset,T,tmin,tmax,ncg,Nmax,plotname,plotdir,antisymmetric)
-        save_corrfitter_results(fid,resultdir,filelist[i],"pipi/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,mode='w')
+        save_corrfitter_results(fid,resultdir,filelist[i],"pipi/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,ncg,mode='w')
 
         # then fir both the pion and the vector meson
         corr_pi = corr[44,:,:]
@@ -160,9 +161,9 @@ def fit_all_files(filelist,filedir,resultdir,ncg=1):
         tmax = abs(T/2)
 
         E, a, E_bs, a_bs, chi2, dof = main(dset_pi,T,tmin,tmax,ncg,Nmax,plotname,plotdir,antisymmetric)
-        save_corrfitter_results(fid,resultdir,filelist[i],"pi/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,mode='a')
+        save_corrfitter_results(fid,resultdir,filelist[i],"pi/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,ncg,mode='a')
         E, a, E_bs, a_bs, chi2, dof = main(dset_rho,T,tmin,tmax,ncg,Nmax,plotname,plotdir,antisymmetric)
-        save_corrfitter_results(fid,resultdir,filelist[i],"rho/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,mode='a')
+        save_corrfitter_results(fid,resultdir,filelist[i],"rho/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,ncg,mode='a')
 
 filedir  = './output/HDF5_source_average/'
 filelist = os.listdir(filedir)

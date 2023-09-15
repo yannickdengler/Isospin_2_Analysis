@@ -32,8 +32,6 @@ function add_mass_band!(plt,m,Δm;label="",alpha=0.5)
 end
 
 h5dir = "./output/HDF5_corrfitter_results/"
-h5dir = "./output/HDF5_corrfitter_results_ncg2/"
-h5dir = "./output/HDF5_corrfitter_results_ncg3/"
 
 ind = 15
 ensemble_sets = unique_ensemble_sets(h5dir;group = "pi")

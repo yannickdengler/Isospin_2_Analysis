@@ -1,12 +1,13 @@
 function finitevolume_goldstone(L,m,Δm)
+    @assert length(L) > 1 "More than one volume required"
     @. model(L,p)  = p[1]*(1+abs(p[2])*exp(-L*p[1])/abs(L*p[1])^(3/2))
     fit  = curve_fit(model,L,m,inv.(Δm.^2),ones(2))
-    return fit
+    return fit, model
 end
 function finitevolume(L,m,Δm,mGS_inf)
     @. model(L,p)  = p[1]*(1+abs(p[2])*exp(-L*mGS_inf)/abs(L*mGS_inf)^(3/2))
     fit  = curve_fit(model,L,m,inv.(Δm.^2),ones(2))
-    return fit
+    return fit, model
 end
 function finite_volume_data(h5dir;beta,mass,group)
     files = readdir(h5dir,join=true)
@@ -28,7 +29,7 @@ function all_infinite_volume_goldstones(h5dir)
         mass, beta, gauge_group = ensemble_sets[ind]
         E, ΔE, L = finite_volume_data(h5dir;beta,mass,group)
         length(E) < 2 && continue
-        fit = finitevolume_goldstone(L,E,ΔE)
+        fit, model = finitevolume_goldstone(L,E,ΔE)
         minf[ind] = fit.param[1]
         Δminf[ind] = stderror(fit)[1]
     end

@@ -1,28 +1,3 @@
-"""
-    find_matching_files(files,beta,mass)
-
-Given an interable containing filenames to hdf5 files, this function finds all 
-files that match the specified values of the inverse coupling `beta` and the 
-fermion mass. 
-"""
-function find_matching_files(files;beta,mass,group)
-    file_ids = h5open.(files) # opens all files 
-    index = 1:length(files)   # indices of specific files
-    # check elementwise for a match
-    correct_beta = read.(file_ids,joinpath(group,"beta")) .== beta  
-    correct_mass_m1 = read.(file_ids,joinpath(group,"m_1")) .== mass
-    correct_mass_m2 = read.(file_ids,joinpath(group,"m_1")) .== mass
-    # set every index that does not match to zero, and filter all vanishing 
-    # entries. Only the indices that correspond to matching ensembles remain.
-    mask = correct_beta.*correct_mass_m1.*correct_mass_m2
-    indices = filter!(!iszero,mask.*index)
-    # get the filenames that matched
-    matched_files = getindex(files,indices)
-    # close all files that have been opened initially
-    close.(file_ids)
-    return matched_files
-end
-
 """ 
     plot_energy_levels(h5dir;beta,mass,group,E_min=1,E_max=1)
     plot_energy_levels!(plt,h5dir;kws...)

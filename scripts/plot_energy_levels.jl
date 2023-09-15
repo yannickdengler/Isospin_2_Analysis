@@ -3,14 +3,6 @@ using Plots; gr(ms=7,frame=:box)
 using HDF5
 using I2julia
 
-function find_largest_volume(h5dir;beta,mass,group)
-    files = readdir(h5dir,join=true)
-    matched = I2julia.find_matching_files(files;beta,mass,group)
-    file_ids = h5open.(matched)
-    Ls = read.(file_ids,joinpath(group,"N_L"))
-    ind = findmax(Ls)[2]
-    return matched[ind]
-end
 function mass_on_largest_volume(h5dir;beta,mass,group)
     largets_volune = find_largest_volume(h5dir;beta,mass,group)
     fid = h5open(largets_volune)

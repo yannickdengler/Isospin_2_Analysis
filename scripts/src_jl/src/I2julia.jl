@@ -17,5 +17,7 @@ include("correlator_derivative.jl")
 export correlator_derivative
 include("plot_energy_levels.jl")
 export plot_energy_levels, plot_energy_levels!
+include("finding_ensembles.jl")
+export find_matching_files, find_largest_volume, unique_ensemble_sets
 
 end # module I2julia

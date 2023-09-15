@@ -37,7 +37,7 @@ only the lowest energy state is plotted.
 
 """
 plot_energy_levels(h5dir;kws...) = plot_energy_levels!(plot(),h5dir;kws...)
-function plot_energy_levels!(plt,h5dir;beta,mass,group,E_min=1,E_max=1,marker=:circle)
+function plot_energy_levels!(plt,h5dir;beta,mass,group,E_min=1,E_max=1,marker=:circle,showinf=false)
     files = readdir(h5dir,join=true)
     matched_files = find_matching_files(files;beta,mass,group)
 
@@ -63,8 +63,21 @@ function plot_energy_levels!(plt,h5dir;beta,mass,group,E_min=1,E_max=1,marker=:c
     # perform the plot
     for level in E_min:E_max
         label = "level $level ($group)"
+        ylabel = "energy"
+        xlabel = "1/L"
         linestyle = :dash
-        plot!(plt,L,E[level,:],yerr=ΔE[level,:];label,marker,linestyle) 
+        xticks_val = inv.(L)
+        xticks_lab = ["1/$l" for l in L]
+        if showinf
+            push!(xticks_val,0.0)
+            push!(xticks_lab,"inf")
+        end
+        xticks = (xticks_val,xticks_lab)
+        plot!(;xlabel,ylabel,linestyle,xticks)
+        plot!(plt,inv.(L),E[level,:],yerr=ΔE[level,:];marker,label) 
+        if showinf
+            xl = xlims(plt)
+            xlims!(plt,(0.0,xl[2]))
+        end
     end
-    plot!(plt,legend=:outerright)
 end

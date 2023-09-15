@@ -20,8 +20,8 @@ def make_prior(N):
     prior['log(dE)'] = gv.log(gv.gvar(N * ['1(1)']))
     return prior
 
-def bootstrap_fit(fitter,dset,T,tmin,tmax,n=20,printing=False):
-    pdatalist = (cf.process_dataset(ds, make_models(T,tmin,tmax)) for ds in gv.dataset.bootstrap_iter(dset, n=n))
+def bootstrap_fit(fitter,dset,T,tmin,tmax,ncg,n=20,printing=False):
+    pdatalist = (cf.process_dataset(ds, make_models(T,tmin,tmax,ncg)) for ds in gv.dataset.bootstrap_iter(dset, n=n))
     bs = gv.dataset.Dataset()
     for bsfit in fitter.bootstrapped_fit_iter(pdatalist=pdatalist):
         bs.append(E=np.cumsum(bsfit.pmean['dE']),a=bsfit.pmean['a'])
@@ -48,9 +48,9 @@ def print_fit_param(fit):
     print('{:2}  {:15}  {:15}'.format('a', a[0], a[1]))
     print('chi2/dof = ', chi2/dof, '\n')
 
-def main(data,T,tmin,tmax,Nmax=5,plotname="test",plotdir="./plots/",antisymmetric=False,plotting=False,printing=False):
+def main(data,T,tmin,tmax,ncg,Nmax,plotname="test",plotdir="./plots/",antisymmetric=False,plotting=False,printing=False):
     T = - abs(T) if antisymmetric else abs(T) 
-    fitter = cf.CorrFitter(models=make_models(T,tmin,tmax))
+    fitter = cf.CorrFitter(models=make_models(T,tmin,tmax,ncg))
     avg = gv.dataset.avg_data(data)
     p0 = None
     # TODO: find good Nmax
@@ -67,7 +67,7 @@ def main(data,T,tmin,tmax,Nmax=5,plotname="test",plotdir="./plots/",antisymmetri
     # already been used to perform a fit.
     # NOTE: The bootstrap analysis is performed using the priors and initial 
     # parameters used in the last invokation of the previous fit. 
-    E_bs, a_bs = bootstrap_fit(fitter, data, T, tmin, tmax)
+    E_bs, a_bs = bootstrap_fit(fitter, data, T, tmin, tmax,ncg)
     # NOTE: From the lsqfit documentation
     # There are several different views available for each plot, specified by parameter view:os.
     #   'ratio': Data divided by fit (default).
@@ -114,56 +114,61 @@ def save_corrfitter_results(fid,resultdir,filename,group,E,a,E_bs,a_bs,chi2,dof,
     f.create_dataset(group+"tmax", data = tmax)
     return
 
+def fit_all_files(filelist,filedir,resultdir,ncg=1):
+    for i in range(0,len(filelist)):
+        filesrc  = filedir+filelist[i]
+        fid = h5py.File(filesrc,'r')
+
+        # read the data from the hdf5 file
+        T = get_hdf5_value(fid,'N_T')
+        L = get_hdf5_value(fid,'N_L')
+        m = get_hdf5_value(fid,'m_1')
+        beta = get_hdf5_value(fid,'beta')
+        corr = get_hdf5_value(fid,'correlator')
+        corr_deriv = get_hdf5_value(fid,'correlator_deriv')
+        ops = get_hdf5_value(fid,'operators')
+
+        plotname = "beta{}_m{}_L{}_T{}".format(beta,m,L,T)
+        print(plotname)
+
+        # start with pipi correlator
+        corr_pipi = -corr_deriv[48,:,:]
+        corr_pipi = dict(Gab=corr_pipi)
+        dset = gv.dataset.Dataset(corr_pipi)
+
+        antisymmetric = True
+        plotdir = "./plots/"
+        Nmax = 10
+        tmin = 3
+        tmax = abs(T/2) - 1
+
+        E, a, E_bs, a_bs, chi2, dof = main(dset,T,tmin,tmax,ncg,Nmax,plotname,plotdir,antisymmetric)
+        save_corrfitter_results(fid,resultdir,filelist[i],"pipi/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,mode='w')
+
+        # then fir both the pion and the vector meson
+        corr_pi = corr[44,:,:]
+        corr_rho = corr[46,:,:]
+        corr_pi = dict(Gab=corr_pi)
+        dset_pi = gv.dataset.Dataset(corr_pi)
+        corr_rho = dict(Gab=corr_rho)
+        dset_rho = gv.dataset.Dataset(corr_rho)
+
+        antisymmetric = False
+        plotdir = "./plots/"
+        Nmax = 10
+        tmin = 1
+        tmax = abs(T/2)
+
+        E, a, E_bs, a_bs, chi2, dof = main(dset_pi,T,tmin,tmax,ncg,Nmax,plotname,plotdir,antisymmetric)
+        save_corrfitter_results(fid,resultdir,filelist[i],"pi/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,mode='a')
+        E, a, E_bs, a_bs, chi2, dof = main(dset_rho,T,tmin,tmax,ncg,Nmax,plotname,plotdir,antisymmetric)
+        save_corrfitter_results(fid,resultdir,filelist[i],"rho/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,mode='a')
+
 filedir  = './output/HDF5_source_average/'
 filelist = os.listdir(filedir)
 resultdir  = './output/HDF5_corrfitter_results/'
-
-for i in range(0,len(filelist)):
-    filesrc  = filedir+filelist[i]
-    fid = h5py.File(filesrc,'r')
-
-    # read the data from the hdf5 file
-    T = get_hdf5_value(fid,'N_T')
-    L = get_hdf5_value(fid,'N_L')
-    m = get_hdf5_value(fid,'m_1')
-    beta = get_hdf5_value(fid,'beta')
-    corr = get_hdf5_value(fid,'correlator')
-    corr_deriv = get_hdf5_value(fid,'correlator_deriv')
-    ops = get_hdf5_value(fid,'operators')
-
-    plotname = "beta{}_m{}_L{}_T{}".format(beta,m,L,T)
-    print(plotname)
-
-
-    # start with pipi correlator
-    corr_pipi = -corr_deriv[48,:,:]
-    corr_pipi = dict(Gab=corr_pipi)
-    dset = gv.dataset.Dataset(corr_pipi)
-
-    antisymmetric = True
-    plotdir = "./plots/"
-    Nmax = 10
-    tmin = 3
-    tmax = abs(T/2) - 1
-
-    E, a, E_bs, a_bs, chi2, dof = main(dset,T,tmin,tmax,Nmax,plotname,plotdir,antisymmetric)
-    save_corrfitter_results(fid,resultdir,filelist[i],"pipi/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,mode='w')
-
-    # then fir both the pion and the vector meson
-    corr_pi = corr[44,:,:]
-    corr_rho = corr[46,:,:]
-    corr_pi = dict(Gab=corr_pi)
-    dset_pi = gv.dataset.Dataset(corr_pi)
-    corr_rho = dict(Gab=corr_rho)
-    dset_rho = gv.dataset.Dataset(corr_rho)
-
-    antisymmetric = False
-    plotdir = "./plots/"
-    Nmax = 10
-    tmin = 1
-    tmax = abs(T/2)
-
-    E, a, E_bs, a_bs, chi2, dof = main(dset_pi,T,tmin,tmax,Nmax,plotname,plotdir,antisymmetric)
-    save_corrfitter_results(fid,resultdir,filelist[i],"pi/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,mode='a')
-    E, a, E_bs, a_bs, chi2, dof = main(dset_rho,T,tmin,tmax,Nmax,plotname,plotdir,antisymmetric)
-    save_corrfitter_results(fid,resultdir,filelist[i],"rho/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,mode='a')
+fit_all_files(filelist,filedir,resultdir,ncg=1)
+resultdir  = './output/HDF5_corrfitter_results_ncg2/'
+fit_all_files(filelist,filedir,resultdir,ncg=2)
+resultdir  = './output/HDF5_corrfitter_results_ncg3/'
+fit_all_files(filelist,filedir,resultdir,ncg=3)

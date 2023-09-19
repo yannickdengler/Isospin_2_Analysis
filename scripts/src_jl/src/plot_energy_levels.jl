@@ -12,7 +12,7 @@ only the lowest energy state is plotted.
 
 """
 plot_energy_levels(h5dir;kws...) = plot_energy_levels!(plot(),h5dir;kws...)
-function plot_energy_levels!(plt,h5dir;beta,mass,group,E_min=1,E_max=1,marker=:circle,showinf=false)
+function plot_energy_levels!(plt,h5dir;beta,mass,group,E_min=1,E_max=1,marker=:circle,showinf=false,factor=1)
     files = readdir(h5dir,join=true)
     matched_files = find_matching_files(files;beta,mass,group)
 
@@ -32,12 +32,12 @@ function plot_energy_levels!(plt,h5dir;beta,mass,group,E_min=1,E_max=1,marker=:c
     permute!(L,perm)
 
     # convert array of array into a 2-dimensional array, i.e. matrix
-    E = hcat(E...)
-    ΔE = hcat(ΔE...)
+    E  = factor .* hcat(E...)
+    ΔE = factor .* hcat(ΔE...)
  
     # perform the plot
     for level in E_min:E_max
-        label = "level $level ($group)"
+        label = isone(factor) ? "level $level ($group)" : "$factor × level $level ($group)"
         ylabel = "energy"
         xlabel = "1/L"
         linestyle = :dash

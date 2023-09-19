@@ -17,6 +17,11 @@ function finite_volume_data(h5dir;beta,mass,group)
     E = first.(read.(fids,joinpath(group,"E")))
     ΔE = first.(read.(fids,joinpath(group,"Delta_E")))
     close.(fids)
+    # sort data by ascending L
+    perm = sortperm(L)
+    permute!(L,perm)
+    permute!(E,perm)
+    permute!(ΔE,perm)
     return E, ΔE, L
 end
 function all_infinite_volume_goldstones(h5dir)

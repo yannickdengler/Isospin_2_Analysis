@@ -132,10 +132,11 @@ def fit_all_files(filelist,filedir,resultdir):
         plotname = "beta{}_m{}_L{}_T{}".format(beta,m,L,T)
         print(plotname)
 
-        binsize = 3
+        binsize = 1
 
         # start with pipi correlator
-        corr_pipi = -corr_deriv[48,:,:]
+        #corr_pipi = -corr_deriv[48,:,:]
+        corr_pipi = corr[40,:,:] - corr[42,:,:]
         corr_pipi = dict(Gab=corr_pipi)
         dset = gv.dataset.Dataset(corr_pipi,binsize=binsize)
 

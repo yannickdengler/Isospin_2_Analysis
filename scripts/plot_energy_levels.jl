@@ -40,6 +40,8 @@ h5dir = "./output/HDF5_corrfitter_results_binsize_2/"
 h5dir = "./output/HDF5_corrfitter_results_binsize_3/"
 
 ind = 13
+ind = 3
+ind = 15
 ensemble_sets = unique_ensemble_sets(h5dir;group = "pi")
 mass, beta, gauge_group = ensemble_sets[ind]
 

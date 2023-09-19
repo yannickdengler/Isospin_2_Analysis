@@ -34,8 +34,8 @@ def add_pi_rho_pipi_average_I2(Operators, Correlators, N_L):
         pi_im_tmp.append(Correlators[Operators.index(Op+"_im")]/(2*pow(N_L,3))) 
     pi = np.mean(pi_tmp,axis=0)
     pi_im = np.mean(pi_im_tmp,axis=0)
-    pipi = (Correlators[Operators.index("AD")]+Correlators[Operators.index("BC")])/(0.5*4*pow(N_L,6))
-    pipi_im = (Correlators[Operators.index("AD_im")]+Correlators[Operators.index("BC_im")])/(0.5*4*pow(N_L,6))
+    pipi = (Correlators[Operators.index("AD")]-Correlators[Operators.index("BC")])/(0.5*4*pow(N_L,6))
+    pipi_im = (Correlators[Operators.index("AD_im")]-Correlators[Operators.index("BC_im")])/(0.5*4*pow(N_L,6))
     for Corr in (pi, pi_im, rho, rho_im, pipi, pipi_im):
         Correlators = np.append(Correlators, np.expand_dims(Corr, axis=0), axis = 0)
     return Operators, Correlators

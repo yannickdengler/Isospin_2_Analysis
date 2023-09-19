@@ -48,7 +48,7 @@ def print_fit_param(fit):
     print('{:2}  {:15}  {:15}'.format('a', a[0], a[1]))
     print('chi2/dof = ', chi2/dof, '\n')
 
-def main(data,T,tmin,tmax,Nmax,plotname="test",plotdir="./plots/",antisymmetric=False,plotting=True,printing=True):
+def main(data,T,tmin,tmax,Nmax,plotname="test",plotdir="./plots/",antisymmetric=False,plotting=False,printing=False):
     T = - abs(T) if antisymmetric else abs(T) 
     fitter = cf.CorrFitter(models=make_models(T,tmin,tmax))
     avg = gv.dataset.avg_data(data)
@@ -81,7 +81,7 @@ def main(data,T,tmin,tmax,Nmax,plotname="test",plotdir="./plots/",antisymmetric=
         fit.show_plots(view='log'  ,save=plotdir+plotname+'/data.pdf')
     return E, a, E_bs, a_bs, chi2, dof
 
-def save_corrfitter_results(fid,resultdir,filename,group,E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,mode='w'):
+def save_corrfitter_results(fid,resultdir,filename,group,E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,binsize,mode='w'):
     os.makedirs(resultdir, exist_ok=True)
     f = h5py.File(resultdir+filename, mode)
 
@@ -112,6 +112,7 @@ def save_corrfitter_results(fid,resultdir,filename,group,E,a,E_bs,a_bs,chi2,dof,
     f.create_dataset(group+"Nexp", data = Nmax)
     f.create_dataset(group+"tmin", data = tmin)
     f.create_dataset(group+"tmax", data = tmax)
+    f.create_dataset(group+"binsize", data = binsize)
     return
 
 def fit_all_files(filelist,filedir,resultdir):
@@ -131,27 +132,29 @@ def fit_all_files(filelist,filedir,resultdir):
         plotname = "beta{}_m{}_L{}_T{}".format(beta,m,L,T)
         print(plotname)
 
+        binsize = 3
+
         # start with pipi correlator
         corr_pipi = -corr_deriv[48,:,:]
         corr_pipi = dict(Gab=corr_pipi)
-        dset = gv.dataset.Dataset(corr_pipi)
+        dset = gv.dataset.Dataset(corr_pipi,binsize=binsize)
 
         antisymmetric = True
         plotdir = "./plots/"
         Nmax = 10
-        tmin = 0
-        tmax = T # abs(T/2) - 1
+        tmin = 3
+        tmax = abs(T/2) - 1
 
         E, a, E_bs, a_bs, chi2, dof = main(dset,T,tmin,tmax,Nmax,plotname,plotdir,antisymmetric)
-        save_corrfitter_results(fid,resultdir,filelist[i],"pipi/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,mode='w')
+        save_corrfitter_results(fid,resultdir,filelist[i],"pipi/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,binsize,mode='w')
 
         # then fir both the pion and the vector meson
         corr_pi = corr[44,:,:]
         corr_rho = corr[46,:,:]
         corr_pi = dict(Gab=corr_pi)
-        dset_pi = gv.dataset.Dataset(corr_pi)
+        dset_pi = gv.dataset.Dataset(corr_pi,binsize=binsize)
         corr_rho = dict(Gab=corr_rho)
-        dset_rho = gv.dataset.Dataset(corr_rho)
+        dset_rho = gv.dataset.Dataset(corr_rho,binsize=binsize)
 
         antisymmetric = False
         plotdir = "./plots/"
@@ -160,9 +163,9 @@ def fit_all_files(filelist,filedir,resultdir):
         tmax = T # abs(T/2)
 
         E, a, E_bs, a_bs, chi2, dof = main(dset_pi,T,tmin,tmax,Nmax,plotname,plotdir,antisymmetric)
-        #save_corrfitter_results(fid,resultdir,filelist[i],"pi/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,mode='a')
+        save_corrfitter_results(fid,resultdir,filelist[i],"pi/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,binsize,mode='a')
         E, a, E_bs, a_bs, chi2, dof = main(dset_rho,T,tmin,tmax,Nmax,plotname,plotdir,antisymmetric)
-        #save_corrfitter_results(fid,resultdir,filelist[i],"rho/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,mode='a')
+        save_corrfitter_results(fid,resultdir,filelist[i],"rho/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,binsize,mode='a')
 
 def fit_single_file(filesrc,tmin,delta_tmax,Nmax):
     fid = h5py.File(filesrc,'r')
@@ -186,14 +189,14 @@ def fit_single_file(filesrc,tmin,delta_tmax,Nmax):
 
 filedir  = './output/HDF5_source_average/'
 filelist = os.listdir(filedir)
-filesrc  = filedir+filelist[1]
+#filesrc  = filedir+filelist[4]
 
-Nmax = 10
-tmin = 3
-delta_tmax = 0
+#Nmax = 10
+#tmin = 3
+#delta_tmax = 0
 
-fit_single_file(filesrc,tmin,delta_tmax,Nmax)
+#fit_single_file(filesrc,tmin,delta_tmax,Nmax)
 
 
-#resultdir  = './output/HDF5_corrfitter_results/'
-#fit_all_files(filelist,filedir,resultdir)
+resultdir  = './output/HDF5_corrfitter_results_binsize_3/'
+fit_all_files(filelist,filedir,resultdir)

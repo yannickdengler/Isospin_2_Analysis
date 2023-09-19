@@ -35,17 +35,15 @@ function add_mass_band!(plt,m,Δm;label="",alpha=0.5)
     hspan!(plt,[m+Δm,m-Δm];label,alpha)
 end
 
-h5dir = "./output/HDF5_corrfitter_results_binsize_1/"
-h5dir = "./output/HDF5_corrfitter_results_binsize_2/"
-h5dir = "./output/HDF5_corrfitter_results_binsize_3/"
+h5dir = "./output/HDF5_corrfitter_results/"
 
-ind = 13
-ind = 3
-ind = 15
+ind = 15 # SU(3)
+ind = 13 # beta=7.2
+ind = 3  # beta=6.9
 ensemble_sets = unique_ensemble_sets(h5dir;group = "pi")
 mass, beta, gauge_group = ensemble_sets[ind]
 
-E_min, E_max = 1, 1
+E_min, E_max = 1, 2
 # naive proxy for infinite volume  mass
 mπLmax, ΔmπLmax = mass_on_largest_volume(h5dir;beta,mass,group="pi")
 EππLmax, ΔEππLmax = mass_on_largest_volume(h5dir;beta,mass,group="pipi")
@@ -59,7 +57,8 @@ plt = plot(legend=:outertopright,title="β=$beta, mass=$mass, gauge group = $gau
 plot_energy_levels!(plt,h5dir;beta,mass,group="pipi",marker=:rect,E_min,E_max)
 #plot_energy_levels!(plt,h5dir;beta,mass,group="rho",marker=:diamond)
 plot_energy_levels!(plt,h5dir;beta,mass,group="pi",marker=:circle,showinf=false,factor=2)
-#plot_energy_levels!(plt,h5dir;beta,mass,group="pi",marker=:circle,showinf=false)
+plot_energy_levels!(plt,h5dir;beta,mass,group="pi",marker=:circle,showinf=false,factor=1)
 add_pion_volume_extrapolation_plot!(h5dir;beta,mass,factor=2,skip=1)
-#add_mass_band!(plt,mπinf,Δmπinf;label="mpi(L → ∞)",alpha=0.5)
+add_mass_band!(plt,mπinf,Δmπinf;label="mpi(L → ∞)",alpha=0.5)
 add_mass_band!(plt,2mπinf,2Δmπinf;label="2mpi(L → ∞)",alpha=0.5)
+add_mass_band!(plt,4mπinf,4Δmπinf;label="4mpi(L → ∞)",alpha=0.5)

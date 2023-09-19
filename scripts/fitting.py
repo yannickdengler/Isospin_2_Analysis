@@ -48,7 +48,7 @@ def print_fit_param(fit):
     print('{:2}  {:15}  {:15}'.format('a', a[0], a[1]))
     print('chi2/dof = ', chi2/dof, '\n')
 
-def main(data,T,tmin,tmax,Nmax,plotname="test",plotdir="./plots/",antisymmetric=False,plotting=False,printing=False):
+def main(data,T,tmin,tmax,Nmax,plotname="test",plotdir="./plots/",antisymmetric=False,plotting=True,printing=True):
     T = - abs(T) if antisymmetric else abs(T) 
     fitter = cf.CorrFitter(models=make_models(T,tmin,tmax))
     avg = gv.dataset.avg_data(data)
@@ -135,8 +135,7 @@ def fit_all_files(filelist,filedir,resultdir):
         binsize = 1
 
         # start with pipi correlator
-        #corr_pipi = -corr_deriv[48,:,:]
-        corr_pipi = corr[40,:,:] - corr[42,:,:]
+        corr_pipi = -corr_deriv[48,:,:]
         corr_pipi = dict(Gab=corr_pipi)
         dset = gv.dataset.Dataset(corr_pipi,binsize=binsize)
 
@@ -190,14 +189,12 @@ def fit_single_file(filesrc,tmin,delta_tmax,Nmax):
 
 filedir  = './output/HDF5_source_average/'
 filelist = os.listdir(filedir)
-#filesrc  = filedir+filelist[4]
 
+#filesrc  = filedir+filelist[4]
 #Nmax = 10
 #tmin = 3
 #delta_tmax = 0
-
 #fit_single_file(filesrc,tmin,delta_tmax,Nmax)
 
-
-resultdir  = './output/HDF5_corrfitter_results_binsize_3/'
+resultdir  = './output/HDF5_corrfitter_results_neu_v3/'
 fit_all_files(filelist,filedir,resultdir)

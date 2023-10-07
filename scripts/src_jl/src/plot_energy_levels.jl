@@ -49,7 +49,7 @@ function plot_energy_levels!(plt,h5dir;beta,mass,group,E_min=1,E_max=1,marker=:c
         end
         xticks = (xticks_val,xticks_lab)
         plot!(;xlabel,ylabel,linestyle,xticks)
-        plot!(plt,inv.(L),E[level,:],yerr=ΔE[level,:];marker,label) 
+        scatter!(plt,inv.(L),E[level,:],yerr=ΔE[level,:];marker,label) 
         if showinf
             xl = xlims(plt)
             xlims!(plt,(0.0,xl[2]))

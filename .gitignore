@@ -8,3 +8,4 @@ scripts/src_py/__pycache__/
 !output/.gitkeep
 !plots/.gitkeep
 !input/.gitkeep
+!input/pipi_fitintervals.csv

@@ -4,6 +4,7 @@ import h5py
 import numpy as np
 import os
 import matplotlib.pyplot as plt
+import csv
 
 def get_hdf5_value(hdf5file,key):
     return hdf5file[key][()]
@@ -48,7 +49,7 @@ def print_fit_param(fit):
     print('{:2}  {:15}  {:15}'.format('a', a[0], a[1]))
     print('chi2/dof = ', chi2/dof, '\n')
 
-def main(data,T,tmin,tmax,Nmax,plotname="test",plotdir="./plots/",antisymmetric=False,plotting=True,printing=True):
+def main(data,T,tmin,tmax,Nmax,plotname="test",plotdir="./plots/",antisymmetric=False,plotting=False,printing=False):
     T = - abs(T) if antisymmetric else abs(T) 
     fitter = cf.CorrFitter(models=make_models(T,tmin,tmax))
     avg = gv.dataset.avg_data(data)
@@ -115,7 +116,7 @@ def save_corrfitter_results(fid,resultdir,filename,group,E,a,E_bs,a_bs,chi2,dof,
     f.create_dataset(group+"binsize", data = binsize)
     return
 
-def fit_all_files(filelist,filedir,resultdir):
+def fit_all_files(filelist,filedir,resultdir,tmins,tmaxs,binsize=1):
     for i in range(0,len(filelist)):
         filesrc  = filedir+filelist[i]
         fid = h5py.File(filesrc,'r')
@@ -132,8 +133,6 @@ def fit_all_files(filelist,filedir,resultdir):
         plotname = "beta{}_m{}_L{}_T{}".format(beta,m,L,T)
         print(plotname)
 
-        binsize = 1
-
         # start with pipi correlator
         corr_pipi = -corr_deriv[48,:,:]
         corr_pipi = dict(Gab=corr_pipi)
@@ -142,8 +141,8 @@ def fit_all_files(filelist,filedir,resultdir):
         antisymmetric = True
         plotdir = "./plots/"
         Nmax = 10
-        tmin = 3
-        tmax = abs(T/2) - 1
+        tmin = tmins[i]
+        tmax = tmaxs[i]
 
         E, a, E_bs, a_bs, chi2, dof = main(dset,T,tmin,tmax,Nmax,plotname,plotdir,antisymmetric)
         save_corrfitter_results(fid,resultdir,filelist[i],"pipi/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,binsize,mode='w')
@@ -159,8 +158,8 @@ def fit_all_files(filelist,filedir,resultdir):
         antisymmetric = False
         plotdir = "./plots/"
         Nmax = 10
-        tmin = 0
-        tmax = T # abs(T/2)
+        tmin = 1
+        tmax = T/2
 
         E, a, E_bs, a_bs, chi2, dof = main(dset_pi,T,tmin,tmax,Nmax,plotname,plotdir,antisymmetric)
         save_corrfitter_results(fid,resultdir,filelist[i],"pi/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,binsize,mode='a')
@@ -186,15 +185,33 @@ def fit_single_file(filesrc,tmin,delta_tmax,Nmax):
     plotdir = "./plots/"
     main(dset,T,tmin,tmax,Nmax,plotname,plotdir,antisymmetric)
 
+def read_filelist_fitparam(filedir,fitfile):
+    filelist = os.listdir(filedir)
+    reader = csv.reader(open(fitfile))
+    # create list that contain the fitting information
+    tmins = []
+    tmaxs = []
+    names = []
+    # skip line containing headers
+    next(reader, None)
+    for row in reader:
+        names.append(row[6])
+        tmins.append(int(row[7]))
+        tmaxs.append(int(row[8]))
 
-filedir  = './output/HDF5_source_average/'
-filelist = os.listdir(filedir)
+    perm  = np.argsort(names)
+    names = np.sort(names)
+    tmins = [tmins[p] for p in perm]
+    tmaxs = [tmaxs[p] for p in perm]
+    filelist = np.sort(filelist)
+    return filelist, tmins, tmaxs
 
-#filesrc  = filedir+filelist[4]
-#Nmax = 10
-#tmin = 3
-#delta_tmax = 0
+filedir = './output/HDF5_source_average/'
+fitfile = './input/pipi_fitintervals.csv'
+filelist, tmins, tmaxs = read_filelist_fitparam(filedir,fitfile)
+resultdir  = './output/HDF5_corrfitter_results_optim/'
+fit_all_files(filelist,filedir,resultdir,tmins, tmaxs)
+
+#filesrc  = filedir+filelist[0]
 #fit_single_file(filesrc,tmin,delta_tmax,Nmax)
 
-resultdir  = './output/HDF5_corrfitter_results_neu_v3/'
-fit_all_files(filelist,filedir,resultdir)

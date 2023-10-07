@@ -7,7 +7,7 @@
 function write_ensemble_list(hdf5list;filename="ensembles.csv") 
     # open file for writing list of ensembles
     io = open(filename,"w")
-    write(io,"β;m;L;T;nsrc;ncfg\n");
+    write(io,"β;m;L;T;nsrc;ncfg;name\n");
 
 
     # loop over all relevant
@@ -19,7 +19,6 @@ function write_ensemble_list(hdf5list;filename="ensembles.csv")
         β = read(file_id,"beta")[1]
         m1 = read(file_id,"m_1")[1]
         m2 = read(file_id,"m_2")[1]
-        group = read(file_id,"gauge_group")
 
         corr = read(file_id,"correlators")
         nsrc = size(corr)[3]
@@ -28,7 +27,7 @@ function write_ensemble_list(hdf5list;filename="ensembles.csv")
         # we always assume degenerate fermions
         @assert m1 == m2
 
-        write(io,"$β;$m1;$L;$T;$nsrc;$ncfg\n");
+        write(io,"$β;$m1;$L;$T;$nsrc;$ncfg;$(basename(hdf_file))\n");
         close(file_id)
     end
     close(io)

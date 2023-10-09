@@ -38,12 +38,14 @@ function all_finite_volume_plots(h5dir,ensemble_sets)
     for ind in eachindex(ensemble_sets)
         mass, beta, gauge_group = ensemble_sets[ind]
 
+        plotname = "$(gauge_group)_beta$(beta)_mass$(mass)"
+
         E_min, E_max = 1, 1
         skip = 0
         
         #infinite volume extrapolation 
         E, ΔE, L = I2julia.finite_volume_data(h5dir;beta,mass,group="pi")
-        length(E) - skip < 2 && continue
+        length(E) - skip < 3 && continue
         fit, model = finitevolume_goldstone(L[skip+1:end],E[skip+1:end],ΔE[skip+1:end])
         mπinf, Δmπinf = fit.param[1], stderror(fit)[1]
 
@@ -52,6 +54,8 @@ function all_finite_volume_plots(h5dir,ensemble_sets)
         plot_energy_levels!(plt,h5dir;beta,mass,group="pi",marker=:circle,showinf=false,factor=2)
         add_pion_volume_extrapolation_plot!(plt,h5dir;beta,mass,factor=2,skip)
         add_mass_band!(plt,2mπinf,2Δmπinf;label="2mpi(L → ∞)",alpha=0.5)
+        ispath("./plots/finite_volume/") || mkpath("./plots/finite_volume/") 
+        savefig(plt,"./plots/finite_volume/$plotname.pdf")
         display(plt)
     end
 end

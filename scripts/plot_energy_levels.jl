@@ -39,7 +39,6 @@ function all_finite_volume_plots(h5dir,ensemble_sets)
         mass, beta, gauge_group = ensemble_sets[ind]
 
         plotname = "$(gauge_group)_beta$(beta)_mass$(mass)"
-
         E_min, E_max = 1, 1
         skip = 0
         

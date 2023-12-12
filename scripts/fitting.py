@@ -209,9 +209,5 @@ def read_filelist_fitparam(filedir,fitfile):
 filedir = './output/HDF5_source_average/'
 fitfile = './input/pipi_fitintervals.csv'
 filelist, tmins, tmaxs = read_filelist_fitparam(filedir,fitfile)
-resultdir  = './output/HDF5_corrfitter_results_optim/'
+resultdir  = './output/HDF5_corrfitter_results/'
 fit_all_files(filelist,filedir,resultdir,tmins, tmaxs)
-
-#filesrc  = filedir+filelist[0]
-#fit_single_file(filesrc,tmin,delta_tmax,Nmax)
-

@@ -22,5 +22,7 @@ include("finding_ensembles.jl")
 export find_matching_files, find_largest_volume, unique_ensemble_sets
 include("finite_volume_analysis.jl")
 export finitevolume_goldstone, all_infinite_volume_goldstones
+include("errorstring.jl")
+export errorstring
 
 end # module I2julia

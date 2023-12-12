@@ -1,5 +1,6 @@
 *.pdf
 *.dat
+*.txt
 output/*
 plots/*
 input/*
@@ -9,3 +10,4 @@ scripts/src_py/__pycache__/
 !plots/.gitkeep
 !input/.gitkeep
 !input/pipi_fitintervals.csv
+get_files_from_cluster.sh

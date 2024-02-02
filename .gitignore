@@ -11,3 +11,4 @@ scripts/src_py/__pycache__/
 !input/.gitkeep
 !input/pipi_fitintervals.csv
 get_files_from_cluster.sh
+.vscode/*

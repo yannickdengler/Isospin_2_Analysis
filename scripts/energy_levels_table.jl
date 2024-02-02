@@ -12,7 +12,7 @@ end
 Δratio(x,y,Δx,Δy) = sqrt((Δx / y)^2 + (Δy*x / y^2)^2)
 Δproduct(x,y,Δx,Δy) = sqrt((Δx * y)^2 + (Δy*x)^2)
 
-h5dir = "./output/HDF5_corrfitter_results_optim/"
+h5dir = "./output/HDF5_corrfitter_results/"
 files = readdir(h5dir,join=true)
 
 io = open("output/overview_table.csv", "w");

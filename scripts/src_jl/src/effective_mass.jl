@@ -99,7 +99,7 @@ function implicit_meff_jackknife(corrs::AbstractArray;sign=+1)
 end
 function apply_jackknife(obs)
     N  = size(obs)[1]
-    O  = vec(mean(obs,dims=1))
-    ΔO = vec(sqrt(N-1)*std(obs,corrected=false,dims=1))
+    O  = vec(nanmean(obs,dims=1))
+    ΔO = vec(sqrt(N-1)*nanstd(obs,corrected=false,dims=1))
     return O, ΔO
 end

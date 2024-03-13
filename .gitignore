@@ -1,14 +1,7 @@
 *.pdf
-*.dat
 *.txt
+*.hdf5
+rsync/*
 output/*
-plots/*
 input/*
-scripts/src_py/__pycache__/
-**.pyc
-!output/.gitkeep
-!plots/.gitkeep
-!input/.gitkeep
 !input/pipi_fitintervals.csv
-get_files_from_cluster.sh
-.vscode/*

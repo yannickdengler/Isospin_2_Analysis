@@ -5,6 +5,7 @@ using Statistics
 using DelimitedFiles
 using Roots
 using ProgressMeter
+using Parsers
 using Plots
 using LsqFit
 
@@ -24,5 +25,7 @@ include("finite_volume_analysis.jl")
 export finitevolume_goldstone, all_infinite_volume_goldstones
 include("errorstring.jl")
 export errorstring
+include("parse_piondecay.jl")
+export parse_spectrum
 
 end # module I2julia

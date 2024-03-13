@@ -135,6 +135,11 @@ def fit_all_files(infile,outfile,groups,tmins,tmaxs,binsize=1):
         ops  = get_hdf5_value(fid,group+'operators')
         corr_deriv = get_hdf5_value(fid,group+'correlator_deriv')
 
+        # data needed for the pion decay constant
+        # (normalisation of correlator is important here!)
+        fpi_corr   = get_hdf5_value(fid,group+'g0g5_correlator')*L**3/2
+        plaquettes = get_hdf5_value(fid,group+'plaquette')
+
         plotname = "beta{}_m{}_L{}_T{}".format(beta,m,L,T)
         print(plotname)
 
@@ -168,6 +173,21 @@ def fit_all_files(infile,outfile,groups,tmins,tmaxs,binsize=1):
         save_corrfitter_results(fid[group],oid,group,"pi/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,binsize)
         E, a, E_bs, a_bs, chi2, dof = main(dset_rho,T,tmin,tmax,Nmax,plotname,plotdir,antisymmetric)
         save_corrfitter_results(fid[group],oid,group,"rho/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,binsize)
+
+        # now do the pion decay constant
+        dset_fpi = gv.dataset.Dataset(dict(Gab=fpi_corr))
+        p = gv.dataset.avg_data(plaquettes)
+        # renormalization from lattice perturbation theory 
+        ZA = 1 + (5/4)*(-12.82-3)*8/(16*np.pi**2)/(beta*p)        
+        E, a, E_bs, a_bs, chi2, dof = main(dset_fpi,T,tmin,tmax,Nmax,plotname,plotdir,antisymmetric)
+        fpi     = a_bs[0]*np.sqrt(2/E[0])
+        fpi_ren = ZA*a_bs[0]*np.sqrt(2/E[0])
+
+        # write pion decay constant into the pion subgroup
+        oid.create_dataset(group+"pi/fpi"    , data = fpi.mean)
+        oid.create_dataset(group+"pi/fpi_ren", data = fpi_ren.mean)
+        oid.create_dataset(group+"pi/Delta_fpi"    , data = fpi.sdev)
+        oid.create_dataset(group+"pi/Delta_fpi_ren", data = fpi_ren.sdev)
 
 
 def read_filelist_fitparam(parameterfile):

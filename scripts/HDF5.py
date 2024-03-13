@@ -40,7 +40,7 @@ def add_pi_rho_pipi_average_I2(Operators, Correlators, N_L):
         Correlators = np.append(Correlators, np.expand_dims(Corr, axis=0), axis = 0)
     return Operators, Correlators
 
-def create_scattering(filename,hdfpath="./output/HDF5_logfiles/"):
+def create_scattering(filename,hdfpath="./output/"):
     """
     Function that converts a logfile from a scattering measurement of HiRep to a HDF file with the relevant information
     """
@@ -168,25 +168,27 @@ def create_scattering(filename,hdfpath="./output/HDF5_logfiles/"):
         num_Montecarlotimes = len(Correlators[0][0])
         num_src = len(Correlators[0])
 
-
         os.makedirs(hdfpath, exist_ok=True)
-        f = h5py.File(hdfpath+"Scattering%s_%s_beta%1.3f_m1%1.3f_m2%1.3f_T%i_L%i_logfile.hdf5"%(isospin_str, gauge_group, beta, m_1, m_2, N_T, N_L),"w")
+        filename  = os.path.join(hdfpath,"logfiles.hdf5")
+        f = h5py.File(filename,"a")
 
-        f.create_dataset("logfile name", data=logfile_name)
-        f.create_dataset("isospin_channel", data=isospin_channel)
-        f.create_dataset("N_mont", data = num_Montecarlotimes)
-        f.create_dataset("N_hits", data = num_src)
-        f.create_dataset("filenames", data = Filenames)
-        f.create_dataset("plaquette", data = Plaquette)
-        f.create_dataset("operators", data=Operators_w_im)
-        f.create_dataset("montecarlotimes", data = Montecarlotimes)
-        f.create_dataset("gauge_group", data = gauge_group)
-        f.create_dataset("beta", data = beta)
-        f.create_dataset("m_1", data = m_1)
-        f.create_dataset("m_2", data = m_2)
-        f.create_dataset("N_L", data = N_L)
-        f.create_dataset("N_T", data = N_T)
-        f.create_dataset("correlators", data = Correlators)
+        groupname = "Scattering%s_%s_beta%1.3f_m1%1.3f_m2%1.3f_T%i_L%i/"%(isospin_str, gauge_group, beta, m_1, m_2, N_T, N_L)
+        
+        f.create_dataset(groupname+"logfile name", data=logfile_name)
+        f.create_dataset(groupname+"isospin_channel", data=isospin_channel)
+        f.create_dataset(groupname+"N_mont", data = num_Montecarlotimes)
+        f.create_dataset(groupname+"N_hits", data = num_src)
+        f.create_dataset(groupname+"filenames", data = Filenames)
+        f.create_dataset(groupname+"plaquette", data = Plaquette)
+        f.create_dataset(groupname+"operators", data=Operators_w_im)
+        f.create_dataset(groupname+"montecarlotimes", data = Montecarlotimes)
+        f.create_dataset(groupname+"gauge_group", data = gauge_group)
+        f.create_dataset(groupname+"beta", data = beta)
+        f.create_dataset(groupname+"m_1", data = m_1)
+        f.create_dataset(groupname+"m_2", data = m_2)
+        f.create_dataset(groupname+"N_L", data = N_L)
+        f.create_dataset(groupname+"N_T", data = N_T)
+        f.create_dataset(groupname+"correlators", data = Correlators)
         print()
 
 

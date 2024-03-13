@@ -4,34 +4,35 @@
     Take an iterable `hdf5list` containing the absolute, full filenames of the
     hdf5 files and creates a csv table of all corresponding  ensembles. 
 """
-function write_ensemble_list(hdf5list;filename="ensembles.csv") 
+function write_ensemble_list(h5file;outdir="output/tables",filename="ensembles.csv") 
     # open file for writing list of ensembles
-    io = open(filename,"w")
-    write(io,"β;m;L;T;nsrc;ncfg;name\n");
+    ispath(outdir) || mkpath(outdir)
+    file = joinpath(outdir,filename)
+    io = open(file,"w")
+    write(io,"β,m,L,T,nsrc,ncfg,name,tmin,tmax\n");
 
+    fid = h5open(h5file,"r")
 
     # loop over all relevant
-    for hdf_file in hdf5list
-        file_id = h5open(hdf_file)
+    for ensemble in keys(fid)
+        
+        T  = read(fid,joinpath(ensemble,"N_T"))[1]
+        L  = read(fid,joinpath(ensemble,"N_L"))[1]
+        β  = read(fid,joinpath(ensemble,"beta"))[1]
+        m1 = read(fid,joinpath(ensemble,"m_1"))[1]
+        m2 = read(fid,joinpath(ensemble,"m_2"))[1]
 
-        T = read(file_id,"N_T")[1]
-        L = read(file_id,"N_L")[1]
-        β = read(file_id,"beta")[1]
-        m1 = read(file_id,"m_1")[1]
-        m2 = read(file_id,"m_2")[1]
-
-        corr = read(file_id,"correlators")
+        corr = read(fid,joinpath(ensemble,"correlators"))
         nsrc = size(corr)[3]
         ncfg = size(corr)[2]
 
         # we always assume degenerate fermions
         @assert m1 == m2
-
-        write(io,"$β;$m1;$L;$T;$nsrc;$ncfg;$(basename(hdf_file))\n");
-        close(file_id)
+        write(io,"$β,$m1,$L,$T,$nsrc,$ncfg,$(ensemble)/,1,$(T÷2)\n");
     end
+    close(fid)
     close(io)
-    sort_ensemble_file!(filename)
+    sort_ensemble_file!(file)
 end
 function sort_ensemble_file!(filename)
     data, header = readdlm(filename,';',Any,header=true)

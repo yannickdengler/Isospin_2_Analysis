@@ -82,9 +82,8 @@ def main(data,T,tmin,tmax,Nmax,plotname="test",plotdir="./plots/",antisymmetric=
         fit.show_plots(view='log'  ,save=plotdir+plotname+'/data.pdf')
     return E, a, E_bs, a_bs, chi2, dof
 
-def save_corrfitter_results(fid,resultdir,filename,group,E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,binsize,mode='w'):
-    os.makedirs(resultdir, exist_ok=True)
-    f = h5py.File(resultdir+filename, mode)
+def save_corrfitter_results(fid,outfile_id,ensemble,group,E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,binsize):
+    f = outfile_id
 
     E_mean = [E_i.mean for E_i in E]
     E_sdev = [E_i.sdev for E_i in E]
@@ -97,38 +96,44 @@ def save_corrfitter_results(fid,resultdir,filename,group,E,a,E_bs,a_bs,chi2,dof,
 
     for key in fid.keys():
         if "correlator" not in key:
-            f.create_dataset(group+key, data = get_hdf5_value(fid,key))
+            f.create_dataset(ensemble+group+key, data = get_hdf5_value(fid,key))
 
-    f.create_dataset(group+"E", data = E_mean)
-    f.create_dataset(group+"E_bs", data = E_bs_mean)
-    f.create_dataset(group+"A", data = a_mean)
-    f.create_dataset(group+"A_bs", data = a_bs_mean)
-    f.create_dataset(group+"Delta_E", data = E_sdev)
-    f.create_dataset(group+"Delta_E_bs", data = E_bs_sdev)
-    f.create_dataset(group+"Delta_A", data = a_sdev)
-    f.create_dataset(group+"Delta_A_bs", data = a_bs_sdev)
-    f.create_dataset(group+"antisymmetric", data = antisymmetric)
-    f.create_dataset(group+"chi2", data = chi2)
-    f.create_dataset(group+"dof", data = dof)
-    f.create_dataset(group+"Nexp", data = Nmax)
-    f.create_dataset(group+"tmin", data = tmin)
-    f.create_dataset(group+"tmax", data = tmax)
-    f.create_dataset(group+"binsize", data = binsize)
+    f.create_dataset(ensemble+group+"E", data = E_mean)
+    f.create_dataset(ensemble+group+"E_bs", data = E_bs_mean)
+    f.create_dataset(ensemble+group+"A", data = a_mean)
+    f.create_dataset(ensemble+group+"A_bs", data = a_bs_mean)
+    f.create_dataset(ensemble+group+"Delta_E", data = E_sdev)
+    f.create_dataset(ensemble+group+"Delta_E_bs", data = E_bs_sdev)
+    f.create_dataset(ensemble+group+"Delta_A", data = a_sdev)
+    f.create_dataset(ensemble+group+"Delta_A_bs", data = a_bs_sdev)
+    f.create_dataset(ensemble+group+"antisymmetric", data = antisymmetric)
+    f.create_dataset(ensemble+group+"chi2", data = chi2)
+    f.create_dataset(ensemble+group+"dof", data = dof)
+    f.create_dataset(ensemble+group+"Nexp", data = Nmax)
+    f.create_dataset(ensemble+group+"tmin", data = tmin)
+    f.create_dataset(ensemble+group+"tmax", data = tmax)
+    f.create_dataset(ensemble+group+"binsize", data = binsize)
     return
 
-def fit_all_files(filelist,filedir,resultdir,tmins,tmaxs,binsize=1):
-    for i in range(0,len(filelist)):
-        filesrc  = filedir+filelist[i]
-        fid = h5py.File(filesrc,'r')
+def fit_all_files(infile,outfile,groups,tmins,tmaxs,binsize=1):
+
+    fid = h5py.File(infile,'r')
+    oid = h5py.File(outfile, 'w')
+    
+    for i in range(0,len(groups)):
+
+        group = groups[i] 
+        tmin = tmins[i]
+        tmax = tmaxs[i]
 
         # read the data from the hdf5 file
-        T = get_hdf5_value(fid,'N_T')
-        L = get_hdf5_value(fid,'N_L')
-        m = get_hdf5_value(fid,'m_1')
-        beta = get_hdf5_value(fid,'beta')
-        corr = get_hdf5_value(fid,'correlator')
-        corr_deriv = get_hdf5_value(fid,'correlator_deriv')
-        ops = get_hdf5_value(fid,'operators')
+        T    = get_hdf5_value(fid,group+'N_T')
+        L    = get_hdf5_value(fid,group+'N_L')
+        m    = get_hdf5_value(fid,group+'m_1')
+        beta = get_hdf5_value(fid,group+'beta')
+        corr = get_hdf5_value(fid,group+'correlator')
+        ops  = get_hdf5_value(fid,group+'operators')
+        corr_deriv = get_hdf5_value(fid,group+'correlator_deriv')
 
         plotname = "beta{}_m{}_L{}_T{}".format(beta,m,L,T)
         print(plotname)
@@ -141,13 +146,11 @@ def fit_all_files(filelist,filedir,resultdir,tmins,tmaxs,binsize=1):
         antisymmetric = True
         plotdir = "./plots/"
         Nmax = 10
-        tmin = tmins[i]
-        tmax = tmaxs[i]
 
         E, a, E_bs, a_bs, chi2, dof = main(dset,T,tmin,tmax,Nmax,plotname,plotdir,antisymmetric)
-        save_corrfitter_results(fid,resultdir,filelist[i],"pipi/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,binsize,mode='w')
+        save_corrfitter_results(fid[group],oid,group,"pipi/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,binsize)
 
-        # then fir both the pion and the vector meson
+        # then fit both the pion and the vector meson
         corr_pi = corr[44,:,:]
         corr_rho = corr[46,:,:]
         corr_pi = dict(Gab=corr_pi)
@@ -162,56 +165,29 @@ def fit_all_files(filelist,filedir,resultdir,tmins,tmaxs,binsize=1):
         tmax = T/2
 
         E, a, E_bs, a_bs, chi2, dof = main(dset_pi,T,tmin,tmax,Nmax,plotname,plotdir,antisymmetric)
-        save_corrfitter_results(fid,resultdir,filelist[i],"pi/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,binsize,mode='a')
+        save_corrfitter_results(fid[group],oid,group,"pi/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,binsize)
         E, a, E_bs, a_bs, chi2, dof = main(dset_rho,T,tmin,tmax,Nmax,plotname,plotdir,antisymmetric)
-        save_corrfitter_results(fid,resultdir,filelist[i],"rho/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,binsize,mode='a')
+        save_corrfitter_results(fid[group],oid,group,"rho/",E,a,E_bs,a_bs,chi2,dof,antisymmetric,Nmax,tmin,tmax,binsize)
 
-def fit_single_file(filesrc,tmin,delta_tmax,Nmax):
-    fid = h5py.File(filesrc,'r')
-    T = get_hdf5_value(fid,'N_T')
-    L = get_hdf5_value(fid,'N_L')
-    m = get_hdf5_value(fid,'m_1')
-    beta = get_hdf5_value(fid,'beta')
 
-    print(beta)
-
-    antisymmetric = True
-    corr = get_hdf5_value(fid,'correlator_deriv')
-    corr_op = -corr[48,:,:]
-    dset = gv.dataset.Dataset(dict(Gab=corr_op))
-
-    tmax = T/2 - delta_tmax
-    plotname = "beta{}_m{}_L{}_T{}".format(beta,m,L,T)
-    plotdir = "./plots/"
-    main(dset,T,tmin,tmax,Nmax,plotname,plotdir,antisymmetric)
-
-def read_filelist_fitparam(filedir,fitfile):
-    filelist = os.listdir(filedir)
-    reader = csv.reader(open(fitfile))
+def read_filelist_fitparam(parameterfile):
+    reader = csv.reader(open(parameterfile))
     # create list that contain the fitting information
-    tmins = []
-    tmaxs = []
-    names = []
+    tmins  = []
+    tmaxs  = []
+    groups = []
     # skip line containing headers
     next(reader, None)
     for row in reader:
-        names.append(row[6])
+        groups.append(row[6])
         tmins.append(int(row[7]))
         tmaxs.append(int(row[8]))
 
-    perm  = np.argsort(names)
-    names = np.sort(names)
-    tmins = [tmins[p] for p in perm]
-    tmaxs = [tmaxs[p] for p in perm]
-    filelist = np.sort(filelist)
-    return filelist, tmins, tmaxs
+    return groups, tmins, tmaxs
 
-filedir = './output/HDF5_source_average/'
-fitfile = './input/pipi_fitintervals.csv'
-filelist, tmins, tmaxs = read_filelist_fitparam(filedir,fitfile)
-print(len(tmins))
-print(len(tmaxs))
-print(len(filelist))
-print(filelist)
-#resultdir  = './output/HDF5_corrfitter_results/'
-#fit_all_files(filelist,filedir,resultdir,tmins, tmaxs)
+parameterfile  = './input/pipi_fitintervals.csv'
+groups, tmins, tmaxs = read_filelist_fitparam(parameterfile)
+
+infile  = './output/correlators.hdf5'
+outfile = './output/fitresults.hdf5'
+fit_all_files(infile,outfile,groups,tmins,tmaxs)

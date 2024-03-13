@@ -1,7 +1,6 @@
 using Pkg; Pkg.activate("./scripts/src_jl")
 using I2julia
+using HDF5 
 
-hdf5dir  = "./output/HDF5_logfiles/" 
-hdf5list = readdir(hdf5dir,join=true)
-filter!(isfile,hdf5list)
-write_averaged_hdf5_files(hdf5list)
+logfileshdf5 = "output/logfiles.hdf5"
+write_averaged_hdf5_files(logfileshdf5)

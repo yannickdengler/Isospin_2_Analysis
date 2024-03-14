@@ -21,7 +21,7 @@ cππ = read(corr_id,joinpath(ensemble,"correlator_deriv"))[:,:,ππo]
 T   = read(corr_id,joinpath(ensemble,"N_T"))
 cππ = read(corr_id,joinpath(ensemble,"correlator"))[:,:,ππo]
 
-meff, Δmeff = implicit_meff_jackknife(cππ;sign=+1)
-
+meff, Δmeff = meff_jackknife(cππ;sign=+1)
+plotlyjs()
 t = 2:T
-scatter(t,meff[t],yerr=Δmeff[t])
+scatter(t,meff[t],yerr=Δmeff[t],ylims=(0.3,1.2))
